@@ -1,26 +1,25 @@
-# JSConf México 2026 — PWA para asistentes
+# JSConf México 2026 — attendee PWA
 
-Mapa del venue, agenda y agenda curada para los asistentes de
-**JSConf México 2026** (29 y 30 de octubre, Jardín Americana, Guadalajara),
-más un back office para que los organizadores administren el programa.
+Venue map, schedule and personal agenda for attendees of **JSConf México 2026**
+(October 29–30, Jardín Americana, Guadalajara), plus a back office where the
+organisers manage the programme.
 
-Mobile-first, instalable y utilizable sin señal.
+Mobile-first, installable, and usable with no signal.
 
 ---
 
-## Correr el proyecto en local
+## Running the project locally
 
-### Requisitos
+### Prerequisites
 
-- **Node.js 20.9 o superior** (Next.js 16 no soporta Node 18). Compruébalo con `node -v`.
-- **npm 10+**. No hace falta Docker, ni Postgres, ni ninguna cuenta: la base de
-  datos de desarrollo es [PGlite](https://pglite.dev), un Postgres real
-  compilado a WebAssembly que vive en la carpeta `.pglite/` del propio
-  repositorio.
+- **Node.js 20.9 or newer** (Next.js 16 dropped Node 18). Check with `node -v`.
+- **npm 10+**. Nothing else — no Docker, no Postgres, no accounts. The
+  development database is [PGlite](https://pglite.dev), a real Postgres compiled
+  to WebAssembly that lives in the repo's own `.pglite/` folder.
 
-### Paso a paso
+### Step by step
 
-**1. Clona el repositorio e instala las dependencias**
+**1. Clone the repository and install dependencies**
 
 ```bash
 git clone https://github.com/MiguelOcegueraM/jsconf-map.git
@@ -28,67 +27,67 @@ cd jsconf-map
 npm install
 ```
 
-**2. Crea tu archivo de variables de entorno**
+**2. Create your environment file**
 
 ```bash
 cp .env.example .env.local
 ```
 
-Para desarrollo local los valores por defecto funcionan tal cual: sin
-`DATABASE_URL` la app usa PGlite, y sin `AUTH_SECRET` firma las sesiones del
-admin con un secreto de desarrollo. Sólo son obligatorias en producción.
+The defaults work as-is for local development: with no `DATABASE_URL` the app
+uses PGlite, and with no `AUTH_SECRET` it signs admin sessions with a
+development-only secret. Both are only required in production.
 
-**3. Siembra la agenda**
+**3. Seed the schedule**
 
 ```bash
 npm run db:seed
 ```
 
-Crea las tablas y carga los 4 escenarios y las 38 sesiones del programa
-preliminar (los 23 speakers confirmados). Es idempotente: puedes repetirlo
-cuando quieras para volver al estado inicial.
+This creates the tables and loads the 4 stages and 38 sessions of the
+provisional programme (the 23 confirmed speakers). It is idempotent — run it
+again any time to get back to the initial state.
 
-**4. Levanta el servidor de desarrollo**
+**4. Start the dev server**
 
 ```bash
 npm run dev
 ```
 
-Listo — <http://localhost:3000>
+That's it — <http://localhost:3000>
 
-### Qué vas a ver
+### What you'll find
 
-| Ruta | Qué es |
+| Route | What it is |
 |---|---|
-| `/` | Mapa interactivo del venue |
-| `/agenda` | Programa de ambos días. **Desliza una charla a la derecha para guardarla, a la izquierda para quitarla** |
-| `/favoritos` | Tu agenda curada, guardada en el navegador |
-| `/admin` | Back office — contraseña **`jsconf2026`** |
+| `/` | Interactive venue map |
+| `/agenda` | Both days' programme. **Swipe a talk right to save it, left to remove it** |
+| `/favoritos` | Your curated agenda, stored in the browser |
+| `/admin` | Back office — password **`jsconf2026`** |
 
-Los favoritos viven en el `localStorage` de tu navegador, así que no necesitas
-crear ninguna cuenta.
+Favourites live in your browser's `localStorage`, so attendees never create an
+account.
 
-### Probar el modo offline y la instalación como app
+### Trying offline mode and installing the app
 
-El service worker sólo se registra en builds de producción, porque en
-desarrollo se pelearía con el hot reload de Turbopack. Para verlo funcionando:
+The service worker only registers in production builds, because in development
+it would fight Turbopack's hot reload. To see it working:
 
 ```bash
 npm run build
 npm start
 ```
 
-Después, en <http://localhost:3000>:
+Then, on <http://localhost:3000>:
 
-- **Offline:** abre las DevTools → pestaña *Network* → selecciona *Offline* y
-  recarga. El mapa, la agenda y los favoritos siguen ahí.
-- **Instalar:** en Chrome aparece el icono de instalar en la barra de
-  direcciones; en iOS, *Compartir → Añadir a pantalla de inicio*.
+- **Offline:** open DevTools → *Network* tab → pick *Offline* and reload. The
+  map, the schedule and your favourites are all still there.
+- **Install:** Chrome shows an install icon in the address bar; on iOS use
+  *Share → Add to Home Screen*.
 
-### Si algo falla
+### Troubleshooting
 
-**`Error: Aborted()` o el puerto 3000 ocupado al sembrar.**
-PGlite sólo admite un proceso a la vez. Detén el servidor antes de correr
+**`Error: Aborted()`, or port 3000 busy while seeding.**
+PGlite allows a single process at a time. Stop the server before running
 `npm run db:seed`:
 
 ```bash
@@ -96,125 +95,128 @@ lsof -ti:3000 | xargs kill -9   # macOS / Linux
 npm run db:seed
 ```
 
-**La base local quedó en mal estado.** Bórrala y vuelve a sembrar:
+**The local database is in a bad state.** Delete it and reseed:
 
 ```bash
 rm -rf .pglite
 npm run db:seed
 ```
 
-**Cambiaste el service worker y no ves el cambio.** DevTools →
-*Application* → *Service Workers* → *Unregister*, y recarga.
+**You changed the service worker and don't see the change.** DevTools →
+*Application* → *Service Workers* → *Unregister*, then reload.
 
 ---
 
-## Cómo está armado
+## How it's built
 
-| Capa | Elección | Por qué |
+| Layer | Choice | Why |
 |---|---|---|
-| Framework | Next.js 16 (App Router) + React 19.2 | mismo stack que jsconf.mx |
-| Estilos | Tailwind v4 + shadcn/ui sobre Base UI | los tokens de marca entran como CSS vars |
-| Gestos | `motion` (ex `framer-motion`) | swipe con `drag="x"` y el pill animado con `layoutId` |
-| Mapa | SVG propio + `react-zoom-pan-pinch` | pinch/zoom nativo sin reinventarlo |
-| Base de datos | Drizzle ORM · Neon en producción, PGlite en local | mismo esquema `pg-core` en ambos |
-| Auth admin | contraseña maestra → JWT (`jose`) en cookie HttpOnly | no hay nada por usuario que guardar |
-| Favoritos | `localStorage` vía `useSyncExternalStore` | sin login, sin servidor, sincronizado entre pestañas |
-| Offline | service worker propio (`public/sw.js`) | ver nota abajo |
+| Framework | Next.js 16 (App Router) + React 19.2 | same stack as jsconf.mx |
+| Styling | Tailwind v4 + shadcn/ui on Base UI | brand tokens drop straight in as CSS vars |
+| Gestures | `motion` (formerly `framer-motion`) | swipe via `drag="x"`, animated segmented control |
+| Map | hand-built SVG + `react-zoom-pan-pinch` | native pinch/zoom without reinventing it |
+| Database | Drizzle ORM · Neon in production, PGlite locally | one `pg-core` schema for both |
+| Admin auth | master password → JWT (`jose`) in an HttpOnly cookie | there's no per-user data to store |
+| Favourites | `localStorage` via `useSyncExternalStore` | no login, no server, synced across tabs |
+| Offline | hand-written service worker (`public/sw.js`) | see the note below |
 
-### Variables de entorno
+### Environment variables
 
-Copia `.env.example` a `.env.local`:
+Copy `.env.example` to `.env.local`:
 
-| Variable | Obligatoria | Nota |
+| Variable | Required | Note |
 |---|---|---|
-| `ADMIN_PASSWORD` | en producción | contraseña maestra del back office |
-| `AUTH_SECRET` | en producción | firma la cookie de sesión — `openssl rand -base64 32` |
-| `DATABASE_URL` | en producción | Postgres de Neon / Vercel. Sin ella se usa PGlite local |
+| `ADMIN_PASSWORD` | in production | back office master password |
+| `AUTH_SECRET` | in production | signs the session cookie — `openssl rand -base64 32` |
+| `DATABASE_URL` | in production | Neon / Vercel Postgres. Without it, local PGlite is used |
 
 ---
 
-## Decisiones que conviene conocer
+## Decisions worth knowing about
 
-**El mapa es un SVG dibujado a mano, no el PDF.** La geometría sale de medir
-`docs/STAGES Y DISTRIBUCION.pdf` renderizado a 200dpi: las posiciones relativas
-son fieles al plano, pero se quitaron cotas y niveles porque un plano 1:100 es
-ilegible en un teléfono. El plano original sigue disponible dentro de la app,
-detrás del botón de capas.
+**The map is a hand-drawn SVG, not the PDF.** Its geometry comes from measuring
+`docs/STAGES Y DISTRIBUCION.pdf` rendered at 200dpi: relative positions are
+faithful to the floor plan, but dimensions and level markers were dropped
+because a 1:100 architectural drawing is unreadable on a phone. The original
+plan is still available inside the app, behind the layers button.
 
-**Las horas se guardan como `day` + `HH:mm` locales, nunca en UTC.** Guadalajara
-es UTC−6 todo el año desde que México eliminó el horario de verano en 2022, así
-que convertir a UTC sólo aporta bugs. La exportación `.ics` sí convierte, porque
-el formato lo exige.
+**Times are stored as `day` + local `HH:mm`, never UTC.** Guadalajara has been
+UTC−6 year-round since Mexico abolished daylight saving in 2022, so converting
+to UTC only introduces bugs. The `.ics` export does convert, because the format
+demands it.
 
-**Los IDs de sesión son estables (`cuid2`) y no se regeneran al editar.** Los
-favoritos viven en el teléfono de cada asistente y apuntan a esos IDs; si una
-sesión se borra, el favorito huérfano simplemente deja de aparecer.
+**Session IDs are stable (`cuid2`) and never regenerated on edit.** Favourites
+live on each attendee's phone and point at those IDs; if a session is deleted,
+the orphaned favourite simply stops showing up.
 
-**`/agenda` y `/favoritos` se renderizan en cada petición.** Los organizadores
-editan el programa durante el propio evento y una copia estática de un minuto es
-justo lo que no quieres cuando alguien va corriendo a una sala. El service worker
-cubre la parte offline.
+**`/agenda` and `/favoritos` render on every request.** Organisers edit the
+programme during the event itself, and a one-minute-stale static copy is exactly
+what you don't want when someone is running to a room. The service worker covers
+the offline side.
 
-**El service worker está escrito a mano en vez de usar `next-pwa` o Serwist.**
-`next-pwa` está sin mantenimiento y Serwist —su sucesor— sólo tiene soporte
-*experimental* para Turbopack, que es el bundler por defecto en Next.js 16, con
-un build en dos pasos. Las necesidades offline aquí son tres rutas y unos
-estáticos, así que un worker de ~150 líneas sale más barato y no se acopla al
-bundler. Al ser rutas dinámicas, Next les pone `Cache-Control: no-store`, y el
-worker reconstruye la respuesta sin esa cabecera antes de guardarla.
+**The service worker is hand-written rather than `next-pwa` or Serwist.**
+`next-pwa` is unmaintained, and Serwist — its successor — only has
+*experimental* Turbopack support, which is the default bundler in Next.js 16,
+and requires a two-step build. The offline needs here are three routes and a few
+static assets, so a ~150-line worker is cheaper and doesn't couple to the
+bundler. Because those routes are dynamic, Next sends `Cache-Control: no-store`,
+so the worker rebuilds the response without that header before storing it.
 
-**El programa sembrado es preliminar.** Al 23 de septiembre de 2026 el sitio
-oficial aún no publica horarios (*"The schedule isn't published yet"*). Lo que sí
-está confirmado son los 23 speakers con su cargo y track: eso es lo que se
-siembra, repartido en una parrilla plausible sobre los horarios que el sitio sí
-confirma. Los títulos van vacíos a propósito —no se inventan charlas— y la UI
-muestra «título por confirmar». El back office es donde entran los datos reales.
+**The seeded programme is provisional.** As of 23 September 2026 the official
+site still hasn't published times (*"The schedule isn't published yet"*). What
+*is* confirmed are the 23 speakers with their roles and tracks — that's what gets
+seeded, laid out over the hours the site does confirm. Talk titles are
+deliberately left empty — no invented talks — and the UI shows "título por
+confirmar". The back office is where the real data goes in.
+
+> **Note on language:** the app's interface is in Spanish, since it's aimed at
+> attendees in Mexico. Code, comments, commits and this README are in English.
 
 ---
 
-## Comandos
+## Commands
 
-| Comando | Qué hace |
+| Command | What it does |
 |---|---|
-| `npm run dev` | desarrollo en <http://localhost:3000> |
-| `npm run build` / `npm start` | build y servidor de producción |
-| `npm run db:seed` | reescribe la agenda preliminar |
-| `npm run db:push` | aplica el esquema a `DATABASE_URL` (Neon) |
+| `npm run dev` | development server at <http://localhost:3000> |
+| `npm run build` / `npm start` | production build and server |
+| `npm run db:seed` | rewrites the provisional schedule |
+| `npm run db:push` | applies the schema to `DATABASE_URL` (Neon) |
 | `npm run db:studio` | Drizzle Studio |
 
-> **PGlite es de un solo proceso.** Detén `npm run dev` antes de correr
-> `db:seed`, o el directorio se bloquea. Si queda en mal estado: `rm -rf .pglite`.
+> **PGlite is single-process.** Stop `npm run dev` before running `db:seed`, or
+> the directory locks up. If it ends up in a bad state: `rm -rf .pglite`.
 
 ---
 
-## Desplegar en Vercel
+## Deploying to Vercel
 
-1. Crea una base Postgres en Neon (plan gratuito) y copia su connection string.
-2. En el proyecto de Vercel define `DATABASE_URL`, `ADMIN_PASSWORD` y `AUTH_SECRET`.
-3. `npm run db:push` con `DATABASE_URL` apuntando a Neon para crear las tablas.
-4. `npm run db:seed` una sola vez si quieres partir de la agenda preliminar.
+1. Create a Postgres database on Neon (free tier) and copy its connection string.
+2. In the Vercel project, set `DATABASE_URL`, `ADMIN_PASSWORD` and `AUTH_SECRET`.
+3. Run `npm run db:push` with `DATABASE_URL` pointing at Neon to create the tables.
+4. Run `npm run db:seed` once if you want to start from the provisional schedule.
 
 ---
 
-## Estructura
+## Structure
 
 ```
 app/
-  page.tsx                 Mapa (vista principal)
-  agenda/                  Agenda general
-  favoritos/               Agenda curada
-  admin/                   Back office protegido
-  manifest.ts              Manifiesto PWA
+  page.tsx                 Map (main view)
+  agenda/                  Full schedule
+  favoritos/               Curated agenda
+  admin/                   Protected back office
+  manifest.ts              PWA manifest
 components/
-  map/                     SVG del venue, controles, bottom sheet
-  agenda/                  Celdas swipeables, selector de día, favoritos
-  shell/                   Layout y menú pill
-  admin/                   Formulario CRUD
+  map/                     Venue SVG, controls, bottom sheet
+  agenda/                  Swipeable cards, day switcher, favourites
+  shell/                   Layout and segmented navigation
+  admin/                   CRUD form
 lib/
-  venue.ts                 Geometría del venue extraída del PDF
-  db/                      Esquema Drizzle y conexión dual
-  seed-data.ts             Speakers confirmados + parrilla preliminar
-  actions.ts               Server Actions del back office
-proxy.ts                   Guarda /admin (en Next 16 `middleware` es `proxy`)
+  venue.ts                 Venue geometry extracted from the PDF
+  db/                      Drizzle schema and dual-driver connection
+  seed-data.ts             Confirmed speakers + provisional grid
+  actions.ts               Back office Server Actions
+proxy.ts                   Guards /admin (Next 16 renamed `middleware`)
 public/sw.js               Service worker
 ```
