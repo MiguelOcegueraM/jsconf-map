@@ -11,7 +11,7 @@
  * sin señal — cosa nada rara en un venue con 500 personas colgadas del mismo LTE.
  */
 
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL = `jsconf-shell-${VERSION}`;
 const ASSETS = `jsconf-assets-${VERSION}`;
 
@@ -19,6 +19,7 @@ const ASSETS = `jsconf-assets-${VERSION}`;
 const CORE_ROUTES = ["/", "/agenda", "/favoritos"];
 const CORE_ASSETS = [
   "/plano-original.png",
+  "/brand/jsconf-light.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/manifest.webmanifest",
@@ -94,6 +95,12 @@ self.addEventListener("fetch", (event) => {
   // la misma URL. Guardarlo pisaría el HTML del que depende el modo offline.
   if (url.searchParams.has("_rsc") || request.headers.get("RSC")) return;
 
+  // Horarios para los recordatorios: red primero, la última copia sin señal.
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(networkFirst(request, ASSETS));
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(handleNavigation(event));
     return;
@@ -155,6 +162,37 @@ async function cacheFirst(request, cacheName) {
   }
   return response;
 }
+
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  try {
+    const response = await fetch(request);
+    if (response.ok) await cache.put(request, await toCacheable(response.clone()));
+    return response;
+  } catch {
+    return (await cache.match(request)) ?? Response.error();
+  }
+}
+
+/**
+ * Tocar un recordatorio abre (o enfoca) la app en la sesión. El aviso lo
+ * dispara la página con `showNotification`; aquí sólo se atiende el clic.
+ */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = event.notification.data?.url ?? "/favoritos";
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = all.find((c) => new URL(c.url).origin === self.location.origin);
+      if (open) {
+        await open.focus();
+        return open.navigate(target);
+      }
+      return self.clients.openWindow(target);
+    })(),
+  );
+});
 
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);

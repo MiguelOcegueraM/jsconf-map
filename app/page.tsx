@@ -4,7 +4,7 @@ import { VenueMap } from "@/components/map/venue-map";
 export const metadata: Metadata = {
   title: "Mapa del venue",
   description:
-    "Plano interactivo de Jardín Americana: Main Stage, ASYNC Stage, salas de workshops, registro y cowork.",
+    "Plano interactivo de Jardín Americana: Stage A, Stage B, Taller A, Taller B, registro y cowork.",
 };
 
 export default function MapPage() {

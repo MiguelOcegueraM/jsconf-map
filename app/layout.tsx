@@ -8,7 +8,7 @@ const chango = Chango({ variable: "--font-chango", weight: "400", subsets: ["lat
 const righteous = Righteous({ variable: "--font-righteous", weight: "400", subsets: ["latin"] });
 const poppins = Poppins({
   variable: "--font-poppins",
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
@@ -24,13 +24,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "JSConf MX",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
   formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f22727",
+  themeColor: "#0b0f3a",
   width: "device-width",
   initialScale: 1,
   // La app es una sola columna: el zoom del navegador sólo rompe el layout,
@@ -45,7 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es-MX"
       className={`${chango.variable} ${righteous.variable} ${poppins.variable} h-full antialiased`}
     >
-      <body className="bg-neutral-50 min-h-full">
+      <body className="min-h-full bg-js-night">
         <AppShell>{children}</AppShell>
         <RegisterSW />
       </body>

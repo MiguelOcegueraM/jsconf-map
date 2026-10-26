@@ -1,5 +1,5 @@
-import type { Session, SessionType, Stage } from "./db/schema";
-import { DAYS, type Day } from "./seed-data";
+import type { Session, SessionSpeaker, SessionType, Stage } from "./types";
+import { DAYS, type Day } from "./program";
 
 /** Actividades generales: ocupan todo el ancho y no pertenecen a un escenario. */
 const GENERAL: SessionType[] = ["registration", "coffee", "lunch", "party"];
@@ -30,8 +30,15 @@ export function groupByTime(sessions: Session[]): TimeSlot[] {
   return [...slots].map(([time, list]) => ({ time, sessions: list }));
 }
 
+const STAGE_ORDER = ["stage_a", "stage_b", "taller_a", "taller_b"];
+
 function byStart(a: Session, b: Session) {
-  return a.startTime.localeCompare(b.startTime) || a.endTime.localeCompare(b.endTime);
+  return (
+    a.startTime.localeCompare(b.startTime) ||
+    // A la misma hora, las generales primero y luego en orden de sala.
+    Number(!isGeneral(a)) - Number(!isGeneral(b)) ||
+    STAGE_ORDER.indexOf(a.stageId ?? "") - STAGE_ORDER.indexOf(b.stageId ?? "")
+  );
 }
 
 export function stageMap(stages: Stage[]) {
@@ -47,10 +54,43 @@ export function hasProvisionalTitle(s: Session) {
   return s.title === null && s.speakerName !== null;
 }
 
+/**
+ * Los ponentes de la sesión. Las que vienen de la API traen la lista
+ * completa con foto; las capturadas a mano en /admin sólo un nombre y cargo.
+ */
+export function sessionSpeakers(s: Session): SessionSpeaker[] {
+  if (s.speakers?.length) return s.speakers;
+  if (!s.speakerName) return [];
+  return [
+    {
+      id: `manual-${s.id}`,
+      name: s.speakerName,
+      honorific: null,
+      role: s.speakerRole,
+      company: null,
+      photoUrl: null,
+    },
+  ];
+}
+
+export function speakerDisplayName(p: SessionSpeaker) {
+  return [p.honorific, p.name].filter(Boolean).join(" ");
+}
+
+export function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+}
+
 export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   keynote: "Keynote",
   talk: "Charla",
-  workshop: "Workshop",
+  workshop: "Taller",
   lightning: "Lightning talks",
   registration: "Registro",
   coffee: "Coffee break",
@@ -59,63 +99,89 @@ export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   closing: "Cierre",
 };
 
+/* ------------------------------------------------------------------ */
+/*  Tonos (mismos que la agenda de jsconf.mx, repo cacao)              */
+/* ------------------------------------------------------------------ */
+
+export type SessionTone = "keynote" | "charla" | "taller" | "sponsored";
+
+/** Las sesiones patrocinadas tienen su propio tono, sea cual sea su tipo. */
+export function toneOf(s: Pick<Session, "type" | "sponsor">): SessionTone {
+  if (s.sponsor) return "sponsored";
+  if (s.type === "keynote") return "keynote";
+  if (s.type === "workshop") return "taller";
+  return "charla";
+}
+
+export const TONE_LABELS: Record<SessionTone, string> = {
+  keynote: "Keynote",
+  charla: "Charla",
+  taller: "Taller",
+  sponsored: "Patrocinada",
+};
+
+// Clases literales para que Tailwind las vea.
+export const TONE_PILL: Record<SessionTone, string> = {
+  keynote: "bg-js-red-700 text-white",
+  charla: "bg-js-indigo-500 text-white",
+  taller: "bg-js-blue-700 text-white",
+  sponsored: "bg-js-yellow-500 text-js-indigo-900",
+};
+
+export const TONE_CARD: Record<SessionTone, string> = {
+  keynote: "bg-[#fff5f5] shadow-[4px_4px_0_0_#ac1c1c]",
+  charla: "bg-white shadow-[4px_4px_0_0_#2630c3]",
+  taller: "bg-[#edf5f8] shadow-[4px_4px_0_0_#357088]",
+  sponsored: "bg-[#fffaeb] shadow-[4px_4px_0_0_#f3ba20]",
+};
+
+/* ------------------------------------------------------------------ */
+/*  Tiempo del evento                                                  */
+/* ------------------------------------------------------------------ */
+
 /**
- * Estilo de las celdas especiales. Cada actividad general tiene su color para
- * que rompan la línea de tiempo y se distingan de un vistazo.
+ * Guadalajara es UTC-6 todo el año (México quitó el horario de verano en
+ * 2022). Todo se compara como "YYYY-MM-DD HH:mm" en hora local del evento,
+ * así el teléfono de alguien que viene de otro huso no mueve la agenda.
  */
-export const GENERAL_STYLES: Partial<
-  Record<SessionType, { wrapper: string; icon: string }>
-> = {
-  registration: {
-    wrapper: "bg-js-blue-50 border-js-blue-300 text-js-blue-900",
-    icon: "text-js-blue-600",
-  },
-  coffee: {
-    wrapper: "bg-js-orange-50 border-js-orange-300 text-js-orange-900",
-    icon: "text-js-orange-600",
-  },
-  lunch: {
-    wrapper: "bg-js-olive-50 border-js-olive-300 text-js-olive-800",
-    icon: "text-js-olive-600",
-  },
-  party: {
-    wrapper: "bg-js-plum text-white border-js-plum",
-    icon: "text-js-yellow-400",
-  },
-};
+export const EVENT_OFFSET = "-06:00";
 
-export const STAGE_ACCENTS: Record<
-  string,
-  { bar: string; chip: string; ring: string }
-> = {
-  "main-stage": {
-    bar: "bg-js-red-500",
-    chip: "bg-js-red-50 text-js-red-700 border-js-red-200",
-    ring: "focus-visible:ring-js-red-400",
-  },
-  "async-stage": {
-    bar: "bg-js-blue-500",
-    chip: "bg-js-blue-50 text-js-blue-800 border-js-blue-200",
-    ring: "focus-visible:ring-js-blue-400",
-  },
-  sandbox: {
-    bar: "bg-js-yellow-500",
-    chip: "bg-js-yellow-50 text-js-yellow-800 border-js-yellow-300",
-    ring: "focus-visible:ring-js-yellow-400",
-  },
-  playground: {
-    bar: "bg-js-orange-500",
-    chip: "bg-js-orange-50 text-js-orange-800 border-js-orange-200",
-    ring: "focus-visible:ring-js-orange-400",
-  },
-};
+export function eventStamp(date: Date) {
+  const local = new Date(date.getTime() - 6 * 60 * 60 * 1000);
+  return local.toISOString().slice(0, 16).replace("T", " ");
+}
 
-export const FALLBACK_ACCENT = {
-  bar: "bg-neutral-400",
-  chip: "bg-neutral-100 text-neutral-700 border-neutral-200",
-  ring: "focus-visible:ring-neutral-400",
-};
+export function sessionStart(s: Pick<Session, "day" | "startTime">) {
+  return new Date(`${s.day}T${s.startTime}:00${EVENT_OFFSET}`);
+}
 
-export function stageAccent(stageId: string | null) {
-  return (stageId && STAGE_ACCENTS[stageId]) || FALLBACK_ACCENT;
+export function sessionEnd(s: Pick<Session, "day" | "endTime">) {
+  return new Date(`${s.day}T${s.endTime}:00${EVENT_OFFSET}`);
+}
+
+export type SessionStatus = "upcoming" | "live" | "past";
+
+export function sessionStatus(
+  s: Pick<Session, "day" | "startTime" | "endTime">,
+  now: string,
+): SessionStatus {
+  if (`${s.day} ${s.endTime}` <= now) return "past";
+  if (`${s.day} ${s.startTime}` <= now) return "live";
+  return "upcoming";
+}
+
+/** Un día ya pasó cuando terminó su última sesión. */
+export function isDayOver(day: Day, sessions: Session[], now: string) {
+  const ofDay = sessions.filter((s) => s.day === day);
+  if (ofDay.length === 0) return now.slice(0, 10) > day;
+  const last = ofDay.reduce((max, s) => (s.endTime > max ? s.endTime : max), "00:00");
+  return `${day} ${last}` <= now;
+}
+
+export function formatTime(time: string) {
+  return time.replace(/^0/, "");
+}
+
+export function formatRange(s: { startTime: string; endTime: string }) {
+  return `${formatTime(s.startTime)}–${formatTime(s.endTime)}`;
 }

@@ -2,11 +2,23 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
-   * PGlite trae un binario WASM y resuelve rutas con `fs`: si el bundler lo
-   * empaqueta, esas rutas dejan de existir en runtime. Neon no lo necesita,
-   * pero dejarlo declarado no cuesta nada y mantiene el dev local funcionando.
+   * Para trabajar en remoto contra el dev server a través de un túnel rápido
+   * de Cloudflare (`cloudflared tunnel --url ...`). Solo aplica en `next dev`.
    */
-  serverExternalPackages: ["@electric-sql/pglite"],
+  allowedDevOrigins: ["*.trycloudflare.com"],
+  /**
+   * Fotos de ponentes: las sirve el blob storage de jsconf-agenda. Pasan por
+   * el optimizador para llegar a 2x del tamaño real en vez del original.
+   */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+        pathname: "/ponentes/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

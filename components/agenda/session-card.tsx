@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   animate,
   motion,
@@ -9,16 +10,23 @@ import {
   useTransform,
   type PanInfo,
 } from "motion/react";
-import { Star, StarOff } from "lucide-react";
-import type { Session, Stage } from "@/lib/db/schema";
+import { ChevronDown, Star, StarOff } from "lucide-react";
+import type { Session, Stage } from "@/lib/types";
 import {
-  SESSION_TYPE_LABELS,
+  TONE_CARD,
+  TONE_LABELS,
+  TONE_PILL,
+  formatRange,
   hasProvisionalTitle,
   sessionHeadline,
-  stageAccent,
+  sessionSpeakers,
+  speakerDisplayName,
+  toneOf,
+  type SessionStatus,
 } from "@/lib/agenda";
 import { haptic } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
+import { SessionDetail } from "./session-detail";
 
 const THRESHOLD = 78;
 const FLICK_VELOCITY = 520;
@@ -29,6 +37,9 @@ type Props = {
   isFavorite: boolean;
   onAdd: () => void;
   onRemove: () => void;
+  status?: SessionStatus;
+  /** Abre el detalle desde fuera (deep link `#K-01`). */
+  defaultExpanded?: boolean;
   /**
    * En Favoritos, quitar saca la celda de la lista. Sin esto la celda
    * regresaría al centro justo mientras se desmonta y el gesto se ve roto.
@@ -42,17 +53,29 @@ type Props = {
 
 const SPRING = { type: "spring", stiffness: 560, damping: 42 } as const;
 
+function workshopNote(session: Session) {
+  if (session.type !== "workshop") return null;
+  const [sh, sm] = session.startTime.split(":").map(Number);
+  const [eh, em] = session.endTime.split(":").map(Number);
+  const total = eh * 60 + em - (sh * 60 + sm);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `Taller de ${[h ? `${h} h` : "", m ? `${m} min` : ""].filter(Boolean).join(" ")} · trae tu laptop`;
+}
+
 export function SessionCard({
   session,
   stage,
   isFavorite,
   onAdd,
   onRemove,
+  status = "upcoming",
+  defaultExpanded = false,
   removeUnmounts = false,
   isExiting = false,
   onExited,
 }: Props) {
-  const accent = stageAccent(session.stageId);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const reduced = useReducedMotion();
   const x = useMotionValue(0);
   /** Evita disparar la vibración en cada píxel mientras se arrastra. */
@@ -65,6 +88,14 @@ export function SessionCard({
     const width = wrapperRef.current?.offsetWidth ?? 360;
     animate(x, -(width + 24), reduced ? { duration: 0 } : { duration: 0.18, ease: "easeIn" });
   }, [isExiting, reduced, x]);
+
+  // Un deep link puede abrirla después del primer render: se ajusta el
+  // estado durante el render en vez de con un efecto.
+  const [prevDefault, setPrevDefault] = useState(defaultExpanded);
+  if (defaultExpanded !== prevDefault) {
+    setPrevDefault(defaultExpanded);
+    if (defaultExpanded) setExpanded(true);
+  }
 
   function settle() {
     animate(x, 0, reduced ? { duration: 0 } : SPRING);
@@ -103,11 +134,20 @@ export function SessionCard({
 
   const headline = sessionHeadline(session);
   const provisional = hasProvisionalTitle(session);
+  const tone = toneOf(session);
+  const speakers = sessionSpeakers(session);
+  const isKeynote = session.type === "keynote";
+  const photo = isKeynote ? speakers[0]?.photoUrl : null;
+  const note = workshopNote(session);
+  const panelId = `detalle-${session.id}`;
 
   return (
     <motion.div
       ref={wrapperRef}
-      className="relative overflow-hidden rounded-2xl"
+      id={session.id}
+      data-session={session.id}
+      // pr/pb dejan ver la sombra desplazada de la tarjeta dentro del recorte.
+      className="relative scroll-mt-48 overflow-hidden pr-1 pb-1"
       initial={false}
       animate={isExiting ? { height: 0, opacity: 0 } : { height: "auto", opacity: 1 }}
       transition={reduced ? { duration: 0 } : { duration: 0.22, ease: "easeInOut" }}
@@ -118,17 +158,17 @@ export function SessionCard({
       {/* Pistas que se revelan bajo la celda al arrastrar */}
       <motion.div
         style={{ opacity: addOpacity }}
-        className="absolute inset-0 flex items-center justify-start bg-js-yellow-500 pl-5"
+        className="radius-card absolute inset-0 right-1 bottom-1 flex items-center justify-start bg-js-yellow-500 pl-5"
         aria-hidden
       >
-        <span className="flex items-center gap-2 text-sm font-bold text-js-yellow-900">
+        <span className="flex items-center gap-2 text-sm font-bold text-js-indigo-900">
           <Star className="size-5 fill-current" />
           Guardar
         </span>
       </motion.div>
       <motion.div
         style={{ opacity: removeOpacity }}
-        className="absolute inset-0 flex items-center justify-end bg-js-red-500 pr-5"
+        className="radius-card absolute inset-0 right-1 bottom-1 flex items-center justify-end bg-js-red-500 pr-5"
         aria-hidden
       >
         <span className="flex items-center gap-2 text-sm font-bold text-white">
@@ -146,77 +186,131 @@ export function SessionCard({
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
         className={cn(
-          "relative flex touch-pan-y gap-3 rounded-2xl border bg-white p-3.5",
-          "border-neutral-200 shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
-          isFavorite && "border-js-yellow-400 bg-js-yellow-50/60",
+          "radius-card relative touch-pan-y border-[3px] border-js-indigo-900 text-js-indigo-900",
+          TONE_CARD[tone],
+          status === "past" && "opacity-60",
         )}
       >
-        <span className={cn("w-1.5 shrink-0 rounded-full", accent.bar)} aria-hidden />
-
-        <div className="min-w-0 flex-1">
-          <p className="font-heading text-[15px] leading-snug text-js-plum">{headline}</p>
-
-          {session.speakerRole && (
-            <p className="mt-0.5 truncate text-xs text-neutral-500">{session.speakerRole}</p>
-          )}
-          {provisional && (
-            <p className="mt-0.5 text-xs text-neutral-400 italic">Título por confirmar</p>
-          )}
-          {session.description && !provisional && (
-            <p className="mt-1 line-clamp-2 text-xs text-neutral-500">{session.description}</p>
-          )}
-
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-xs font-semibold text-neutral-700 tabular-nums">
-              {session.startTime}–{session.endTime}
-            </span>
+        <div className="flex items-start gap-2 px-3.5 pt-3">
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             {stage && (
-              <span
-                className={cn(
-                  "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
-                  accent.chip,
-                )}
-              >
+              <span className="rounded-full bg-js-indigo-900 px-2 py-px text-[11px] font-bold text-white">
                 {stage.name}
               </span>
             )}
-            {session.track && (
-              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600">
-                {session.track}
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase",
+                TONE_PILL[tone],
+              )}
+            >
+              {TONE_LABELS[tone]}
+            </span>
+            {session.language && (
+              <span
+                className="rounded-full border-2 border-js-indigo-900 px-1.5 text-[11px] font-bold"
+                title={session.language === "en" ? "En inglés" : "En español"}
+              >
+                {session.language.toUpperCase()}
               </span>
             )}
-            {session.type === "workshop" && (
-              <span className="rounded-full bg-js-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-js-indigo-700">
-                {SESSION_TYPE_LABELS.workshop}
+            {status === "live" ? (
+              <span className="flex items-center gap-1 rounded-full bg-js-red-600 px-2 py-px text-[11px] font-bold text-white">
+                <span className="size-1.5 animate-pulse rounded-full bg-white" aria-hidden />
+                En vivo
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-js-slate tabular-nums">
+                {formatRange(session)}
               </span>
             )}
-          </div>
+          </span>
+
+          {/* El swipe es el gesto principal, pero nunca el único camino. */}
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              if (isFavorite) onRemove();
+              else onAdd();
+            }}
+            aria-pressed={isFavorite}
+            aria-label={
+              isFavorite
+                ? `Quitar «${headline}» de favoritos`
+                : `Guardar «${headline}» en favoritos`
+            }
+            className={cn(
+              "-mt-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-full",
+              "transition-colors focus-visible:outline-[3px] focus-visible:outline-js-yellow-500",
+              isFavorite
+                ? "text-js-yellow-600 hover:bg-js-yellow-100"
+                : "text-js-slate-light hover:bg-js-haze hover:text-js-indigo-900",
+            )}
+          >
+            <Star className={cn("size-5", isFavorite && "fill-current")} />
+          </button>
         </div>
 
-        {/* El swipe es el gesto principal, pero nunca el único camino. */}
         <button
           type="button"
-          onClick={() => {
-            haptic();
-            if (isFavorite) onRemove();
-            else onAdd();
-          }}
-          aria-pressed={isFavorite}
-          aria-label={
-            isFavorite
-              ? `Quitar «${headline}» de favoritos`
-              : `Guardar «${headline}» en favoritos`
-          }
-          className={cn(
-            "-m-1 grid size-11 shrink-0 place-items-center self-start rounded-full",
-            "transition-colors focus-visible:ring-2 focus-visible:ring-js-indigo-500 focus-visible:outline-none",
-            isFavorite
-              ? "text-js-yellow-600 hover:bg-js-yellow-100"
-              : "text-neutral-300 hover:bg-neutral-100 hover:text-neutral-500",
-          )}
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={() => setExpanded((v) => !v)}
+          className="flex w-full flex-col gap-1.5 px-3.5 pt-1.5 pb-3 text-left focus-visible:outline-none"
         >
-          <Star className={cn("size-5", isFavorite && "fill-current")} />
+          <span className="flex items-center gap-3.5">
+            {photo && (
+              <Image
+                src={photo}
+                alt=""
+                width={64}
+                height={64}
+                sizes="64px"
+                className="radius-card size-16 shrink-0 border-[3px] border-js-indigo-900 object-cover object-top"
+              />
+            )}
+            <span className="flex min-w-0 flex-col gap-1">
+              <span
+                className={cn(
+                  "leading-snug font-bold",
+                  isKeynote ? "text-xl" : "text-[15px]",
+                )}
+              >
+                {headline}
+              </span>
+              {speakers.length > 0 && !provisional && (
+                <span className="text-[13px]">
+                  <span className="font-semibold">
+                    {speakers.map(speakerDisplayName).join(", ")}
+                  </span>
+                  {speakers.length === 1 && speakers[0].company && ` · ${speakers[0].company}`}
+                </span>
+              )}
+              {provisional && (
+                <span className="text-xs text-js-slate italic">Título por confirmar</span>
+              )}
+            </span>
+          </span>
+          {session.sponsor && (
+            <span className="text-xs font-semibold">Presentada por {session.sponsor}</span>
+          )}
+          {note && <span className="text-xs font-semibold text-js-blue-900">{note}</span>}
+          <span className="flex items-center gap-1.5 text-[13px] font-bold text-js-indigo-500">
+            {expanded ? "Ocultar detalle" : "Ver detalle"}
+            <ChevronDown
+              className={cn("size-3.5 transition-transform", expanded && "rotate-180")}
+              strokeWidth={2.5}
+              aria-hidden
+            />
+          </span>
         </button>
+
+        {expanded && (
+          <div id={panelId} className="mx-3.5 border-t-2 border-js-indigo-900 pt-3 pb-4">
+            <SessionDetail session={session} stage={stage} />
+          </div>
+        )}
       </motion.article>
     </motion.div>
   );

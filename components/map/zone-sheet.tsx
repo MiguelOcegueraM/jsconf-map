@@ -9,7 +9,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { ZONE_STYLES, ZONE_TO_STAGE, type VenueZone } from "@/lib/venue";
 import { cn } from "@/lib/utils";
 
@@ -34,22 +33,22 @@ export function ZoneSheet({ zone, open, onOpenChange, onJump }: Props) {
             <SheetHeader className="gap-2 px-0">
               <span
                 className={cn(
-                  "w-fit rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase",
+                  "w-fit rounded-full border-2 border-js-indigo-900 px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase",
                   ZONE_STYLES[zone.kind].chip,
                 )}
               >
                 {KIND_LABELS[zone.kind]}
               </span>
-              <SheetTitle className="font-heading text-2xl text-js-plum">
+              <SheetTitle className="font-display typography-shadow text-3xl text-js-indigo-900">
                 {zone.name}
               </SheetTitle>
-              <SheetDescription className="text-sm text-neutral-600">
+              <SheetDescription className="text-[15px] text-js-indigo-900">
                 {zone.description}
               </SheetDescription>
             </SheetHeader>
 
             {zone.level === "planta-alta" && (
-              <p className="mt-4 flex items-start gap-2 rounded-xl border border-js-red-200 bg-js-red-50 p-3 text-sm font-medium text-js-red-800">
+              <p className="radius-card mt-4 flex items-start gap-2 border-[3px] border-js-red-700 bg-js-red-50 p-3 text-sm font-semibold text-js-red-800">
                 <MoveUp className="mt-0.5 size-4 shrink-0" aria-hidden />
                 Está en planta alta. Súbete por las escaleras marcadas en rojo en el
                 mapa.
@@ -57,31 +56,30 @@ export function ZoneSheet({ zone, open, onOpenChange, onJump }: Props) {
             )}
 
             {zone.howTo && (
-              <p className="mt-3 flex items-start gap-2 rounded-xl bg-neutral-100 p-3 text-sm text-neutral-700">
-                <Footprints className="mt-0.5 size-4 shrink-0 text-neutral-500" aria-hidden />
+              <p className="radius-card mt-3 flex items-start gap-2 bg-js-haze p-3 text-sm text-js-indigo-900">
+                <Footprints className="mt-0.5 size-4 shrink-0 text-js-indigo-500" aria-hidden />
                 {zone.howTo}
               </p>
             )}
 
             <div className="mt-5 flex flex-col gap-2">
               {stageId && (
-                <Button
-                  className="min-h-11 w-full"
-                  nativeButton={false}
-                  render={<Link href={`/agenda?escenario=${stageId}`} />}
+                <Link
+                  href={`/agenda?escenario=${stageId}`}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border-[3px] border-js-indigo-900 bg-js-indigo-500 px-5 text-[15px] font-bold text-white shadow-[4px_4px_0_0_#f3ba20] transition-colors hover:bg-js-indigo-700"
                 >
-                  Ver la agenda de este escenario
+                  Ver la agenda de {zone.name}
                   <ArrowUpRight className="size-4" />
-                </Button>
+                </Link>
               )}
-              <Button
-                variant="outline"
-                className="min-h-11 w-full"
+              <button
+                type="button"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border-[3px] border-js-indigo-900 bg-white px-5 text-[15px] font-bold text-js-indigo-900"
                 onClick={() => onJump(zone.id)}
               >
                 <Info className="size-4" />
                 Centrar en el mapa
-              </Button>
+              </button>
             </div>
           </>
         )}
@@ -92,7 +90,7 @@ export function ZoneSheet({ zone, open, onOpenChange, onJump }: Props) {
 
 const KIND_LABELS: Record<VenueZone["kind"], string> = {
   stage: "Escenario",
-  workshop: "Workshop",
+  workshop: "Taller",
   service: "Servicio",
   sponsor: "Sponsors",
   food: "Comida",

@@ -100,9 +100,9 @@ export const VENUE_SURFACES = [
 
 export const VENUE_ZONES: VenueZone[] = [
   {
-    id: "main-stage",
-    name: "Main Stage",
-    label: ["MAIN", "STAGE"],
+    id: "stage-a",
+    name: "Stage A",
+    label: ["STAGE A"],
     kind: "stage",
     level: "planta-baja",
     x: 640,
@@ -112,14 +112,14 @@ export const VENUE_ZONES: VenueZone[] = [
     r: 18,
     key: true,
     description:
-      "El escenario principal, al aire libre sobre el costado oriente del jardín. Las lonas tensadas entre los árboles cubren al público.",
+      "El escenario principal (antes «Main Stage»): keynotes y la mayoría de las charlas. Al aire libre sobre el costado oriente del jardín; las lonas tensadas entre los árboles cubren al público.",
     howTo:
       "Entrando por el acceso principal, camina derecho hacia el jardín. Es lo primero que vas a ver a tu derecha.",
   },
   {
-    id: "async-stage",
-    name: "ASYNC Stage",
-    label: ["ASYNC", "STAGE"],
+    id: "stage-b",
+    name: "Stage B",
+    label: ["STAGE B"],
     kind: "stage",
     level: "planta-alta",
     x: 168,
@@ -129,14 +129,14 @@ export const VENUE_ZONES: VenueZone[] = [
     r: 18,
     key: true,
     description:
-      "Escenario en terraza, en la PLANTA ALTA del extremo noroeste del jardín. No se ve desde el piso: hay que subir.",
+      "El segundo escenario (antes «ASYNC Stage»), en terraza, en la PLANTA ALTA del extremo noroeste del jardín. No se ve desde el piso: hay que subir.",
     howTo:
       "Cruza el jardín hasta la esquina noroeste, bajo los árboles. Las escaleras están justo al norte de la terraza — marcadas con la flecha roja en el plano oficial.",
   },
   {
-    id: "workshop-sandbox",
-    name: "The Sandbox",
-    label: ["WORKSHOP 1", "The Sandbox"],
+    id: "taller-a",
+    name: "Taller A",
+    label: ["TALLER A"],
     kind: "workshop",
     level: "planta-baja",
     x: 352,
@@ -146,14 +146,14 @@ export const VENUE_ZONES: VenueZone[] = [
     r: 10,
     key: true,
     description:
-      "Sala de workshops techada, dentro de la casa, junto al patio central.",
+      "Sala de talleres (antes «The Sandbox»), techada, dentro de la casa, junto al patio central. Trae tu laptop.",
     howTo:
       "Entra por el ingreso principal de la casa y sigue el pasillo del patio hacia el norte.",
   },
   {
-    id: "workshop-playground",
-    name: "The Playground",
-    label: ["WORKSHOP 2", "The Playground"],
+    id: "taller-b",
+    name: "Taller B",
+    label: ["TALLER B"],
     kind: "workshop",
     level: "planta-baja",
     x: 352,
@@ -163,9 +163,9 @@ export const VENUE_ZONES: VenueZone[] = [
     r: 10,
     key: true,
     description:
-      "La segunda sala de workshops, también techada, inmediatamente al sur de The Sandbox.",
+      "La segunda sala de talleres (antes «The Playground»), también techada, inmediatamente al sur del Taller A.",
     howTo:
-      "Misma entrada que The Sandbox; es la puerta siguiente bajando por el pasillo.",
+      "Misma entrada que el Taller A; es la puerta siguiente bajando por el pasillo.",
   },
   {
     id: "registro",
@@ -253,7 +253,7 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 88,
     r: 10,
     description:
-      "Puerta principal de la casa. Por aquí se llega a las dos salas de workshops.",
+      "Puerta principal de la casa. Por aquí se llega al Taller A y al Taller B.",
   },
   {
     id: "banos-norte",
@@ -279,16 +279,16 @@ export const VENUE_ZONES: VenueZone[] = [
     w: 66,
     h: 78,
     r: 8,
-    description: "Baños dentro de la casa, frente a las salas de workshops.",
+    description: "Baños dentro de la casa, frente al Taller A y al Taller B.",
   },
 ];
 
 /**
- * Escaleras al ASYNC Stage. En el PDF es una flecha roja apuntando hacia la
+ * Escaleras al Stage B. En el PDF es una flecha roja apuntando hacia la
  * terraza: es el dato que más se pregunta el día del evento, así que va como
  * elemento propio y no como una etiqueta más.
  */
-export const ASYNC_STAIRS = {
+export const STAGE_B_STAIRS = {
   x: 132,
   y: 578,
   w: 40,
@@ -301,21 +301,21 @@ export const ZONE_STYLES: Record<
 > = {
   stage: {
     fill: "var(--color-js-red-500)",
-    stroke: "var(--color-js-red-700)",
+    stroke: "var(--color-js-indigo-900)",
     text: "#ffffff",
     chip: "bg-js-red-500 text-white",
   },
   workshop: {
-    fill: "var(--color-js-yellow-500)",
-    stroke: "var(--color-js-yellow-700)",
-    text: "#3a2a00",
-    chip: "bg-js-yellow-500 text-js-yellow-900",
+    fill: "var(--color-js-blue-700)",
+    stroke: "var(--color-js-indigo-900)",
+    text: "#ffffff",
+    chip: "bg-js-blue-700 text-white",
   },
   service: {
-    fill: "var(--color-js-blue-500)",
-    stroke: "var(--color-js-blue-800)",
+    fill: "var(--color-js-indigo-500)",
+    stroke: "var(--color-js-indigo-900)",
     text: "#ffffff",
-    chip: "bg-js-blue-500 text-white",
+    chip: "bg-js-indigo-500 text-white",
   },
   sponsor: {
     fill: "var(--color-js-plum)",
@@ -343,8 +343,8 @@ export const ZONE_STYLES: Record<
   },
 };
 
-/** El ASYNC Stage es el único bloque morado del PDF que NO está a nivel de piso. */
-export const ASYNC_STAGE_ID = "async-stage";
+/** El Stage B es el único bloque morado del PDF que NO está a nivel de piso. */
+export const STAGE_B_ZONE_ID = "stage-b";
 
 export function getZone(id: string) {
   return VENUE_ZONES.find((z) => z.id === id);
@@ -352,8 +352,8 @@ export function getZone(id: string) {
 
 /** Zonas del mapa que corresponden a un escenario de la agenda. */
 export const ZONE_TO_STAGE: Record<string, string> = {
-  "main-stage": "main-stage",
-  "async-stage": "async-stage",
-  "workshop-sandbox": "sandbox",
-  "workshop-playground": "playground",
+  "stage-a": "stage_a",
+  "stage-b": "stage_b",
+  "taller-a": "taller_a",
+  "taller-b": "taller_b",
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ASYNC_STAIRS,
+  STAGE_B_STAIRS,
   VENUE_SURFACES,
   VENUE_VIEWBOX,
   VENUE_ZONES,
@@ -20,7 +20,7 @@ function isVertical(z: VenueZone) {
 }
 
 /**
- * Encoge el texto para que quepa dentro del bloque. "The Playground" no cabe
+ * Encoge el texto para que quepa dentro del bloque. "Registro & Lobby" no cabe
  * en 136 unidades al mismo cuerpo que "WC", y un SVG no reflota solo.
  */
 function fitSize(text: string, available: number, base: number) {
@@ -33,7 +33,7 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
       viewBox={`0 0 ${VENUE_VIEWBOX.width} ${VENUE_VIEWBOX.height}`}
       className="h-full w-full touch-none select-none"
       role="group"
-      aria-label="Plano de Jardín Americana con los escenarios y servicios de JSConf México 2026"
+      aria-label="Plano de Jardín Americana con Stage A, Stage B, Taller A, Taller B y los servicios de JSConf México 2026"
     >
       {/* Predio */}
       <rect
@@ -88,12 +88,12 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
         </text>
       </g>
 
-      {/* Escaleras al ASYNC Stage — la flecha roja del plano original */}
+      {/* Escaleras al Stage B — la flecha roja del plano original */}
       <g aria-hidden>
         <path
-          d={`M ${ASYNC_STAIRS.x + ASYNC_STAIRS.w / 2 - 7} ${ASYNC_STAIRS.y}
+          d={`M ${STAGE_B_STAIRS.x + STAGE_B_STAIRS.w / 2 - 7} ${STAGE_B_STAIRS.y}
               h 14
-              v ${ASYNC_STAIRS.h - 34}
+              v ${STAGE_B_STAIRS.h - 34}
               h 13
               l -20 34
               l -20 -34
@@ -101,8 +101,8 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
           fill="var(--color-js-red-500)"
         />
         <text
-          x={ASYNC_STAIRS.x + ASYNC_STAIRS.w / 2}
-          y={ASYNC_STAIRS.y - 14}
+          x={STAGE_B_STAIRS.x + STAGE_B_STAIRS.w / 2}
+          y={STAGE_B_STAIRS.y - 14}
           textAnchor="middle"
           fontSize={19}
           fontWeight={700}
@@ -190,7 +190,7 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
               })}
             </g>
 
-            {/* Marca de planta alta: el ASYNC Stage no está a nivel de piso */}
+            {/* Marca de planta alta: el Stage B no está a nivel de piso */}
             {z.level === "planta-alta" && (
               <g transform={`translate(${z.x + z.w - 22}, ${z.y + 22})`} pointerEvents="none">
                 <circle r={17} fill="#ffffff" stroke={style.stroke} strokeWidth={2.5} />

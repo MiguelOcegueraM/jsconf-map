@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   TransformComponent,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { PageHero } from "@/components/shell/page-hero";
 import { VenueSvg } from "./venue-svg";
 import { ZoneSheet } from "./zone-sheet";
 import {
@@ -67,29 +68,34 @@ export function VenueMap() {
     [focus, select],
   );
 
+  // `/?zona=stage-b` (el "Cómo llegar" de la agenda) abre directo esa zona.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("zona");
+    const zone = id ? getZone(id) : undefined;
+    if (!zone) return;
+    // Un frame para que el TransformWrapper ya tenga medidas.
+    const raf = requestAnimationFrame(() => jumpTo(zone));
+    return () => cancelAnimationFrame(raf);
+  }, [jumpTo]);
+
   return (
     <div className="flex flex-col">
-      <div className="px-4 pt-4 pb-3">
-        <h1 className="font-display text-2xl leading-tight text-js-plum">
-          Jardín Americana
-        </h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Av. Ignacio L. Vallarta 1305, Col. Americana. Toca cualquier zona para ver
-          cómo llegar.
-        </p>
-      </div>
+      <PageHero title="El venue">
+        <strong className="font-bold">Jardín Americana</strong> · Av. Ignacio L. Vallarta
+        1305, Col. Americana. Toca cualquier zona para ver cómo llegar.
+      </PageHero>
 
       {/* Accesos rápidos a los seis puntos que sí o sí vas a buscar */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-2 overflow-x-auto bg-white px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {KEY_ZONES.map((z) => (
           <button
             key={z.id}
             type="button"
             onClick={() => jumpTo(z)}
             className={cn(
-              "min-h-9 shrink-0 rounded-full px-3 text-xs font-semibold whitespace-nowrap",
+              "min-h-9 shrink-0 rounded-full border-2 border-js-indigo-900 px-3 text-[13px] font-bold whitespace-nowrap",
               "transition-transform active:scale-95",
-              "focus-visible:ring-2 focus-visible:ring-js-indigo-500 focus-visible:outline-none",
+              "focus-visible:outline-[3px] focus-visible:outline-offset-1 focus-visible:outline-js-yellow-500",
               ZONE_STYLES[z.kind].chip,
             )}
           >
@@ -98,7 +104,7 @@ export function VenueMap() {
         ))}
       </div>
 
-      <div className="relative border-y border-neutral-200 bg-neutral-100">
+      <div className="relative border-y-[3px] border-js-indigo-900 bg-js-haze">
         <div ref={wrapperRef} className="h-[62dvh] max-h-[680px] min-h-[420px] w-full">
           <TransformWrapper
             ref={apiRef}
@@ -147,7 +153,7 @@ function MapControls({
   apiRef: React.RefObject<ReactZoomPanPinchRef | null>;
 }) {
   const btn =
-    "size-10 rounded-full bg-white/95 shadow-md border border-neutral-200 text-neutral-700 hover:bg-white";
+    "size-10 rounded-full border-2 border-js-indigo-900 bg-white text-js-indigo-900 shadow-[2px_2px_0_0_#101452] hover:bg-js-haze";
 
   return (
     <div className="absolute right-3 bottom-3 flex flex-col gap-2">
@@ -209,7 +215,7 @@ function MapControls({
 
 const LEGEND = [
   { kind: "stage", label: "Escenarios" },
-  { kind: "workshop", label: "Workshops" },
+  { kind: "workshop", label: "Talleres" },
   { kind: "service", label: "Servicios" },
   { kind: "sponsor", label: "Sponsors" },
   { kind: "food", label: "Comida" },
@@ -220,9 +226,9 @@ function MapLegend() {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
       {LEGEND.map(({ kind, label }) => (
-        <span key={kind} className="flex items-center gap-1.5 text-xs text-neutral-600">
+        <span key={kind} className="flex items-center gap-1.5 text-xs font-medium text-js-indigo-900">
           <span
-            className="size-3 rounded-[3px]"
+            className="size-3.5 rounded border-2 border-js-indigo-900"
             style={{ backgroundColor: ZONE_STYLES[kind].fill }}
             aria-hidden
           />

@@ -1,7 +1,7 @@
 import { Coffee, PartyPopper, Ticket, UtensilsCrossed } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { Session, SessionType } from "@/lib/db/schema";
-import { GENERAL_STYLES, SESSION_TYPE_LABELS } from "@/lib/agenda";
+import type { Session, SessionType } from "@/lib/types";
+import { SESSION_TYPE_LABELS, formatRange } from "@/lib/agenda";
 import { cn } from "@/lib/utils";
 
 const ICONS: Partial<Record<SessionType, LucideIcon>> = {
@@ -12,34 +12,44 @@ const ICONS: Partial<Record<SessionType, LucideIcon>> = {
 };
 
 /**
- * Actividades generales: no pertenecen a un escenario, no se guardan en
- * favoritos y rompen a propósito el ritmo visual de la línea de tiempo.
+ * Actividades generales con el rayado de las bandas de jsconf.mx. No
+ * pertenecen a un escenario ni se guardan en favoritos; la fiesta va en
+ * índigo noche para que se lea como el cierre del día.
  */
-export function GeneralRow({ session }: { session: Session }) {
-  const style = GENERAL_STYLES[session.type] ?? {
-    wrapper: "bg-neutral-100 border-neutral-300 text-neutral-700",
-    icon: "text-neutral-500",
-  };
+export function GeneralRow({ session, live = false }: { session: Session; live?: boolean }) {
   const Icon = ICONS[session.type];
+  const party = session.type === "party";
 
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-2xl border border-dashed px-4 py-3",
-        style.wrapper,
+        "flex items-center gap-3 rounded-[10px] border-2 border-js-indigo-900 px-4 py-2.5",
+        party ? "bg-js-night text-white" : "stripes-break text-js-indigo-900",
       )}
     >
-      {Icon && <Icon className={cn("size-5 shrink-0", style.icon)} aria-hidden />}
+      {Icon && (
+        <Icon
+          className={cn("size-5 shrink-0", party ? "text-js-yellow-400" : "text-js-indigo-900")}
+          aria-hidden
+        />
+      )}
       <div className="min-w-0 flex-1">
-        <p className="font-heading text-[15px] leading-tight">
+        <p className="text-[14px] leading-tight font-bold">
           {session.title ?? SESSION_TYPE_LABELS[session.type]}
         </p>
         {session.locationNote && (
-          <p className="mt-0.5 truncate text-xs opacity-80">{session.locationNote}</p>
+          <p className="mt-0.5 truncate text-xs font-medium opacity-80">{session.locationNote}</p>
         )}
       </div>
-      <span className="shrink-0 font-mono text-xs font-semibold tabular-nums opacity-90">
-        {session.startTime}–{session.endTime}
+      <span
+        className={cn(
+          "shrink-0 rounded-full border px-2 text-[11px] font-semibold tabular-nums",
+          party
+            ? "border-white/40 bg-white/10 text-white"
+            : "border-js-slate-light bg-white text-js-indigo-900",
+        )}
+      >
+        {live ? "Ahora" : formatRange(session)}
       </span>
     </div>
   );

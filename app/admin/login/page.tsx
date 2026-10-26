@@ -22,15 +22,15 @@ function LoginForm() {
   const [state, action, pending] = useActionState<ActionState, FormData>(login, undefined);
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-js-plum px-5">
+    <main className="grid min-h-dvh place-items-center bg-js-night px-5">
       <form
         action={action}
-        className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl"
+        className="w-full max-w-sm radius-panel border-4 border-js-indigo-900 bg-white p-6 shadow-[6px_6px_0_0_#ff2d95]"
       >
         <span className="grid size-12 place-items-center rounded-2xl bg-js-red-50">
           <Lock className="size-5 text-js-red-600" />
         </span>
-        <h1 className="font-display mt-4 text-xl text-js-plum">Back office</h1>
+        <h1 className="font-display mt-4 text-xl text-js-indigo-900">Back office</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Administración de la agenda de JSConf México 2026.
         </p>

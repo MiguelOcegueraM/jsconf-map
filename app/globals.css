@@ -191,10 +191,23 @@
   /* tertiary-variant → índigo */
   --color-js-indigo-50: #e9eaf9;
   --color-js-indigo-100: #bcbfec;
+  --color-js-indigo-200: #9ba0e3;
   --color-js-indigo-300: #6e74d7;
+  --color-js-indigo-400: #5159cf;
   --color-js-indigo-500: #2630c3;
+  --color-js-indigo-600: #232cb1;
   --color-js-indigo-700: #1b228a;
+  --color-js-indigo-800: #151a6b;
   --color-js-indigo-900: #101452;
+
+  /* superficies de la agenda de jsconf.mx (cacao/apps/site-2026) */
+  --color-js-night: #0b0f3a;
+  --color-js-magenta: #ff2d95;
+  --color-js-lavender: #d4d0f0;
+  --color-js-mist: #fbfaff;
+  --color-js-haze: #f4f3fb;
+  --color-js-slate: #4a4f7a;
+  --color-js-slate-light: #8c8fb8;
 
   /* verde olivo */
   --color-js-olive-50: #eef0eb;
@@ -220,6 +233,7 @@
   --primary-foreground: #ffffff;
   --ring: #2630c3;
   --radius: 0.875rem;
+  --foreground: #101452;
 }
 
 
@@ -239,4 +253,29 @@
 }
 @utility safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Piezas del sistema visual de jsconf.mx (repo cacao)                */
+/* ------------------------------------------------------------------ */
+
+/* El título con sombra amarilla de los encabezados de jsconf.mx */
+@utility typography-shadow {
+  text-shadow: -3px 3px 0px #f9ca22;
+}
+
+/* Esquina superior izquierda grande, las demás chicas: la firma de las tarjetas */
+@utility radius-card {
+  border-radius: 18px 6px 6px 6px;
+}
+@utility radius-panel {
+  border-radius: 30px 8px 8px 8px;
+}
+
+/* Bandas de registro / comida: rayado amarillo como en la agenda del sitio */
+@utility stripes-break {
+  background-image: repeating-linear-gradient(135deg, #fdefb6 0 8px, #fbeaba 8px 16px);
+}
+@utility stripes-recess {
+  background-image: repeating-linear-gradient(135deg, #f6f5fb 0 8px, #efeef8 8px 16px);
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AgendaView } from "@/components/agenda/agenda-view";
 import { getAgenda } from "@/lib/queries";
 import { isDay } from "@/lib/agenda";
-import { DAYS } from "@/lib/seed-data";
+import { DAYS } from "@/lib/program";
 
 export const metadata: Metadata = {
   title: "Agenda",

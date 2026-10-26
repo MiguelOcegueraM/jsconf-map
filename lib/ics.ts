@@ -1,5 +1,5 @@
-import type { Session, Stage } from "./db/schema";
-import { sessionHeadline } from "./agenda";
+import type { Session, Stage } from "./types";
+import { sessionHeadline, sessionSpeakers, speakerDisplayName } from "./agenda";
 
 /**
  * Guadalajara es UTC-6 todo el año: México eliminó el horario de verano en
@@ -31,6 +31,43 @@ function escape(value: string) {
   return value.replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
 }
 
+function sessionDetails(s: Session) {
+  const who = sessionSpeakers(s)
+    .map((p) => [speakerDisplayName(p), p.role, p.company].filter(Boolean).join(", "))
+    .join(" / ");
+  return [who, s.description].filter(Boolean).join("\n\n");
+}
+
+function sessionWhere(s: Session, stages: Map<string, Stage>) {
+  const stage = s.stageId ? stages.get(s.stageId) : undefined;
+  return `${stage?.name ?? s.locationNote ?? "Jardín Americana"} · Jardín Americana, Guadalajara`;
+}
+
+/** Enlace "Añadir a Google Calendar" — en Android abre la app directo. */
+export function googleCalendarUrl(s: Session, stages: Map<string, Stage>) {
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${sessionHeadline(s)} · JSConf MX`,
+    dates: `${toUtcStamp(s.day, s.startTime)}/${toUtcStamp(s.day, s.endTime)}`,
+    details: sessionDetails(s),
+    location: sessionWhere(s, stages),
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+/** Descarga un .ics: iOS lo abre en Calendario, el escritorio en su app. */
+export function downloadIcs(sessions: Session[], stages: Map<string, Stage>, filename: string) {
+  const blob = new Blob([buildIcs(sessions, stages)], {
+    type: "text/calendar;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function buildIcs(sessions: Session[], stages: Map<string, Stage>) {
   const lines = [
     "BEGIN:VCALENDAR",
@@ -42,11 +79,7 @@ export function buildIcs(sessions: Session[], stages: Map<string, Stage>) {
   ];
 
   for (const s of sessions) {
-    const stage = s.stageId ? stages.get(s.stageId) : undefined;
-    const where = stage?.name ?? s.locationNote ?? "Jardín Americana";
-    const details = [s.speakerName, s.speakerRole, s.description]
-      .filter(Boolean)
-      .join(" — ");
+    const details = sessionDetails(s);
 
     lines.push(
       "BEGIN:VEVENT",
@@ -55,8 +88,14 @@ export function buildIcs(sessions: Session[], stages: Map<string, Stage>) {
       `DTSTART:${toUtcStamp(s.day, s.startTime)}`,
       `DTEND:${toUtcStamp(s.day, s.endTime)}`,
       fold(`SUMMARY:${escape(sessionHeadline(s))}`),
-      fold(`LOCATION:${escape(`${where} · Jardín Americana, Guadalajara`)}`),
+      fold(`LOCATION:${escape(sessionWhere(s, stages))}`),
       ...(details ? [fold(`DESCRIPTION:${escape(details)}`)] : []),
+      // El propio calendario del teléfono avisa 10 minutos antes.
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "TRIGGER:-PT10M",
+      fold(`DESCRIPTION:${escape(sessionHeadline(s))}`),
+      "END:VALARM",
       "END:VEVENT",
     );
   }
