@@ -11,7 +11,7 @@
  * sin señal — cosa nada rara en un venue con 500 personas colgadas del mismo LTE.
  */
 
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL = `jsconf-shell-${VERSION}`;
 const ASSETS = `jsconf-assets-${VERSION}`;
 

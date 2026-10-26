@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PageHero } from "@/components/shell/page-hero";
+import { InstallGuide } from "./install-guide";
 import { VenueSvg } from "./venue-svg";
 import { ZoneSheet } from "./zone-sheet";
 import {
@@ -133,6 +134,7 @@ export function VenueMap() {
       </div>
 
       <MapLegend />
+      <InstallGuide />
 
       <ZoneSheet
         zone={selected}
@@ -140,7 +142,11 @@ export function VenueMap() {
         onOpenChange={setOpen}
         onJump={(id) => {
           const z = getZone(id);
-          if (z) jumpTo(z);
+          if (!z) return;
+          // El panel tapa media pantalla: se baja para dejar ver la zona,
+          // que queda centrada y marcada con su contorno punteado.
+          setOpen(false);
+          focus(z);
         }}
       />
     </div>
@@ -218,7 +224,6 @@ const LEGEND = [
   { kind: "workshop", label: "Talleres" },
   { kind: "service", label: "Servicios" },
   { kind: "sponsor", label: "Sponsors" },
-  { kind: "food", label: "Comida" },
   { kind: "entrance", label: "Accesos" },
 ] as const;
 

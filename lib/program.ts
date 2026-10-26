@@ -51,7 +51,7 @@ const GENERAL: GeneralSession[] = [
     description: "Recoge tu gafete en el stand de café de la esquina sureste.",
   },
   { id: "d1-coffee-1", day: "2026-10-29", startTime: "12:00", endTime: "12:30", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
-  { id: "d1-lunch", day: "2026-10-29", startTime: "13:30", endTime: "15:00", stageId: null, type: "lunch", title: "Comida", locationNote: "Restaurante · jardín sur" },
+  { id: "d1-lunch", day: "2026-10-29", startTime: "13:30", endTime: "15:00", stageId: null, type: "lunch", title: "Comida", locationNote: "Jardín sur" },
   { id: "d1-coffee-2", day: "2026-10-29", startTime: "16:30", endTime: "16:50", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
   { id: "d1-happy", day: "2026-10-29", startTime: "18:00", endTime: "20:00", stageId: null, type: "party", title: "Happy Hour", locationNote: "NPM Zone · jardín norte", description: "Cerveza, tacos y networking bajo las lonas." },
 
@@ -63,7 +63,7 @@ const GENERAL: GeneralSession[] = [
     description: "Si ya tienes gafete del día 1, pasa directo.",
   },
   { id: "d2-coffee-1", day: "2026-10-30", startTime: "12:00", endTime: "12:30", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
-  { id: "d2-lunch", day: "2026-10-30", startTime: "13:30", endTime: "15:00", stageId: null, type: "lunch", title: "Comida", locationNote: "Restaurante · jardín sur" },
+  { id: "d2-lunch", day: "2026-10-30", startTime: "13:30", endTime: "15:00", stageId: null, type: "lunch", title: "Comida", locationNote: "Jardín sur" },
   { id: "d2-coffee-2", day: "2026-10-30", startTime: "16:30", endTime: "16:50", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
   { id: "d2-party", day: "2026-10-30", startTime: "18:00", endTime: "21:00", stageId: null, type: "party", title: "Closing Party", locationNote: "NPM Zone · jardín norte" },
 ];

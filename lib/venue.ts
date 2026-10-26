@@ -11,7 +11,8 @@
  * El norte del plano apunta hacia ARRIBA en este viewBox.
  */
 
-export const VENUE_VIEWBOX = { width: 1000, height: 1743 } as const;
+/** El alto incluye la franja de Av. Ignacio L. Vallarta al sur del predio. */
+export const VENUE_VIEWBOX = { width: 1000, height: 1805 } as const;
 
 export type ZoneKind =
   | "stage"
@@ -57,8 +58,9 @@ export const VENUE_SURFACES = [
     stroke: "var(--color-js-olive-200)",
   },
   {
-    id: "acceso-vehicular",
-    label: "Acceso vehicular",
+    id: "pasillo",
+    // Sin rótulo: el Stage A ya lo identifica.
+    label: null,
     x: 760,
     y: 20,
     w: 215,
@@ -78,7 +80,7 @@ export const VENUE_SURFACES = [
   },
   {
     id: "patio",
-    label: "Patio",
+    label: "Patio casa",
     x: 320,
     y: 905,
     w: 200,
@@ -105,16 +107,16 @@ export const VENUE_ZONES: VenueZone[] = [
     label: ["STAGE A"],
     kind: "stage",
     level: "planta-baja",
-    x: 640,
+    x: 811,
     y: 230,
     w: 112,
     h: 360,
     r: 18,
     key: true,
     description:
-      "El escenario principal (antes «Main Stage»): keynotes y la mayoría de las charlas. Al aire libre sobre el costado oriente del jardín; las lonas tensadas entre los árboles cubren al público.",
+      "El escenario principal (antes «Main Stage»): keynotes y la mayoría de las charlas. Al aire libre sobre el pasillo oriente, a un costado del jardín norte.",
     howTo:
-      "Entrando por el acceso principal, camina derecho hacia el jardín. Es lo primero que vas a ver a tu derecha.",
+      "Desde el acceso (jardín sur, sobre Av. Ignacio L. Vallarta) sube por el pasillo oriente hacia el norte: el Stage A está a lo largo del pasillo.",
   },
   {
     id: "stage-b",
@@ -146,9 +148,9 @@ export const VENUE_ZONES: VenueZone[] = [
     r: 10,
     key: true,
     description:
-      "Sala de talleres (antes «The Sandbox»), techada, dentro de la casa, junto al patio central. Trae tu laptop.",
+      "Sala de talleres (antes «The Sandbox»), techada, dentro de la casa, al sur del Patio casa. Trae tu laptop.",
     howTo:
-      "Entra por el ingreso principal de la casa y sigue el pasillo del patio hacia el norte.",
+      "Entra por el ingreso de la casa, a la derecha del Patio casa, y cruza el patio hacia el sur: es la primera sala.",
   },
   {
     id: "taller-b",
@@ -165,7 +167,7 @@ export const VENUE_ZONES: VenueZone[] = [
     description:
       "La segunda sala de talleres (antes «The Playground»), también techada, inmediatamente al sur del Taller A.",
     howTo:
-      "Misma entrada que el Taller A; es la puerta siguiente bajando por el pasillo.",
+      "Misma entrada que el Taller A; sigue hacia el sur, es la sala siguiente.",
   },
   {
     id: "registro",
@@ -180,8 +182,8 @@ export const VENUE_ZONES: VenueZone[] = [
     r: 10,
     key: true,
     description:
-      "Aquí recoges tu gafete. Es el stand de café de doble tamaño en la esquina sureste, junto al área de restaurante.",
-    howTo: "Primera parada al llegar. Está a un costado de las mesas con sombrillas.",
+      "Aquí recoges tu gafete. Está en la esquina sureste del jardín sur, a unos pasos del acceso.",
+    howTo: "Primera parada al llegar: entrando por el acceso, a tu derecha.",
   },
   {
     id: "cowork",
@@ -214,32 +216,18 @@ export const VENUE_ZONES: VenueZone[] = [
       "Stands de patrocinadores y actividades, en la mitad poniente del jardín norte. También es la sede del Happy Hour.",
   },
   {
-    id: "restaurant",
-    name: "Restaurante",
-    label: ["RESTAURANTE"],
-    kind: "food",
-    level: "planta-baja",
-    x: 650,
-    y: 1480,
-    w: 180,
-    h: 100,
-    r: 10,
-    description:
-      "Mesas con sombrillas en el jardín sur. Aquí se sirve la comida de ambos días.",
-  },
-  {
     id: "acceso",
     name: "Acceso principal",
     label: ["ACCESO"],
     kind: "entrance",
     level: "planta-baja",
-    x: 790,
-    y: 26,
-    w: 150,
+    x: 715,
+    y: 1652,
+    w: 200,
     h: 66,
     r: 10,
     description:
-      "Entrada desde Av. Ignacio L. Vallarta 1305, Col. Americana. Es el único acceso peatonal al venue.",
+      "Entrada por el jardín sur, sobre Av. Ignacio L. Vallarta 1305, Col. Americana. Es el único acceso peatonal al venue.",
   },
   {
     id: "ingreso-casa",
@@ -247,13 +235,13 @@ export const VENUE_ZONES: VenueZone[] = [
     label: ["INGRESO", "CASA"],
     kind: "entrance",
     level: "planta-baja",
-    x: 378,
-    y: 1462,
+    x: 526,
+    y: 905,
     w: 118,
     h: 88,
     r: 10,
     description:
-      "Puerta principal de la casa. Por aquí se llega al Taller A y al Taller B.",
+      "Puerta principal de la casa, pegada al Patio casa por su lado derecho. Por aquí se llega al Taller A y al Taller B.",
   },
   {
     id: "banos-norte",

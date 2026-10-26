@@ -47,6 +47,31 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
         strokeWidth={3}
       />
 
+      {/* Av. Ignacio L. Vallarta: el acceso da a ella, por el jardín sur */}
+      <g aria-hidden>
+        <rect x={0} y={1745} width={1000} height={60} fill="#e4e3ee" />
+        <line
+          x1={0}
+          y1={1775}
+          x2={1000}
+          y2={1775}
+          stroke="#ffffff"
+          strokeWidth={4}
+          strokeDasharray="28 22"
+        />
+        <text
+          x={500}
+          y={1766}
+          textAnchor="middle"
+          fontSize={20}
+          fontWeight={700}
+          letterSpacing={2}
+          className="fill-js-slate"
+        >
+          AV. IGNACIO L. VALLARTA
+        </text>
+      </g>
+
       {/* Superficies de contexto */}
       {VENUE_SURFACES.map((s) => (
         <g key={s.id}>
@@ -60,16 +85,18 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
             stroke={s.stroke}
             strokeWidth={2}
           />
-          <text
-            x={s.x + 14}
-            y={s.id === "acceso-vehicular" ? s.y + s.h - 16 : s.y + 30}
-            className="fill-neutral-400"
-            fontSize={21}
-            fontWeight={500}
-            letterSpacing={1}
-          >
-            {s.label}
-          </text>
+          {s.label && (
+            <text
+              x={s.x + 14}
+              y={s.y + 30}
+              className="fill-neutral-400"
+              fontSize={21}
+              fontWeight={500}
+              letterSpacing={1}
+            >
+              {s.label}
+            </text>
+          )}
         </g>
       ))}
 
