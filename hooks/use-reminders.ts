@@ -4,6 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { ReminderSession } from "@/app/api/sesiones/route";
 import { EVENT_OFFSET } from "@/lib/agenda";
 import { useFavorites } from "./use-favorites";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Recordatorios locales: 10 minutos antes de cada favorito, una notificación
@@ -53,18 +54,19 @@ function setEnabled(on: boolean) {
 
 export function useReminders() {
   const state = useSyncExternalStore(subscribe, readState, () => "off" as const);
+  const { t } = useI18n();
 
   const enable = useCallback(async () => {
     if (!supported()) return;
     const permission = await Notification.requestPermission();
     setEnabled(permission === "granted");
     if (permission === "granted") {
-      await notify("Recordatorios activados", {
-        body: `Te avisamos ${REMINDER_LEAD_MIN} minutos antes de cada charla en tus favoritos.`,
+      await notify(t.reminders.onTitle, {
+        body: t.reminders.onBody(REMINDER_LEAD_MIN),
         tag: "jsconf-reminders-on",
       });
     }
-  }, []);
+  }, [t]);
 
   const disable = useCallback(() => setEnabled(false), []);
 
@@ -124,6 +126,7 @@ async function loadSessions(): Promise<ReminderSession[]> {
 export function ReminderScheduler() {
   const { state } = useReminders();
   const { ids } = useFavorites();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (state !== "on" || ids.length === 0) return;
@@ -148,7 +151,7 @@ export function ReminderScheduler() {
         timers.push(
           window.setTimeout(() => {
             markFired(s.id);
-            notify(`En ${REMINDER_LEAD_MIN} min: ${s.title}`, {
+            notify(t.reminders.soon(REMINDER_LEAD_MIN, s.title), {
               body: `${s.startTime} · ${s.where}`,
               tag: `jsconf-${s.id}`,
               data: { url: `/agenda?dia=${s.day}#${s.id}` },
@@ -162,7 +165,7 @@ export function ReminderScheduler() {
       cancelled = true;
       timers.forEach((t) => window.clearTimeout(t));
     };
-  }, [state, ids]);
+  }, [state, ids, t]);
 
   return null;
 }

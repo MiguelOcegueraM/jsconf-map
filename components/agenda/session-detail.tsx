@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarPlus, Headphones, MapPin } from "lucide-react";
 import type { Session, Stage } from "@/lib/types";
-import { DAY_LABELS } from "@/lib/program";
 import {
   formatRange,
   initials,
@@ -14,28 +13,28 @@ import {
 import { downloadIcs, googleCalendarUrl } from "@/lib/ics";
 import { isDay } from "@/lib/agenda";
 import { translationRoom } from "@/lib/translation";
-
-const LANGUAGE_NAMES = { es: "Español", en: "Inglés" } as const;
+import { useI18n } from "@/lib/i18n/client";
 
 /** Qué/dónde/quién/resumen y los atajos al calendario — el SessionDetailBody de jsconf.mx. */
 export function SessionDetail({ session, stage }: { session: Session; stage?: Stage }) {
   const speakers = sessionSpeakers(session);
   const stages = new Map(stage ? [[stage.id, stage]] : []);
-  const dayLabel = isDay(session.day) ? DAY_LABELS[session.day].long : session.day;
+  const { t } = useI18n();
+  const dayLabel = isDay(session.day) ? t.days[session.day].long : session.day;
 
   return (
     <div className="flex flex-col gap-4 text-js-indigo-900">
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-        <dt className="font-bold">Cuándo</dt>
+        <dt className="font-bold">{t.detail.when}</dt>
         <dd>
           {dayLabel} · {formatRange(session)}
         </dd>
-        <dt className="font-bold">Dónde</dt>
-        <dd>{stage?.name ?? session.locationNote ?? "Jardín Americana"}</dd>
+        <dt className="font-bold">{t.detail.where}</dt>
+        <dd>{stage?.name ?? session.locationNote ?? t.detail.venue}</dd>
         {session.language && (
           <>
-            <dt className="font-bold">Idioma</dt>
-            <dd>{LANGUAGE_NAMES[session.language]}</dd>
+            <dt className="font-bold">{t.detail.language}</dt>
+            <dd>{t.languageNames[session.language]}</dd>
           </>
         )}
       </dl>
@@ -73,11 +72,11 @@ export function SessionDetail({ session, stage }: { session: Session; stage?: St
       )}
 
       {session.sponsor && (
-        <p className="text-sm font-semibold">Presentada por {session.sponsor}</p>
+        <p className="text-sm font-semibold">{t.card.sponsoredBy(session.sponsor)}</p>
       )}
 
       <p className="text-[15px] leading-relaxed whitespace-pre-line">
-        {session.description ?? "El resumen de esta sesión todavía no se publica."}
+        {session.description ?? t.detail.noAbstract}
       </p>
 
       <div className="flex flex-wrap gap-2.5">
@@ -87,7 +86,7 @@ export function SessionDetail({ session, stage }: { session: Session; stage?: St
             className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-js-indigo-900 bg-js-yellow-500 px-4 text-sm font-bold text-js-indigo-900"
           >
             <Headphones className="size-4" aria-hidden />
-            Traducción en vivo
+            {t.detail.liveTranslation}
           </Link>
         )}
         <button
@@ -96,7 +95,7 @@ export function SessionDetail({ session, stage }: { session: Session; stage?: St
           className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-js-indigo-900 bg-js-indigo-500 px-4 text-sm font-bold text-white transition-colors hover:bg-js-indigo-700"
         >
           <CalendarPlus className="size-4" aria-hidden />
-          Añadir al calendario
+          {t.detail.addToCalendar}
         </button>
         <a
           href={googleCalendarUrl(session, stages)}
@@ -104,7 +103,7 @@ export function SessionDetail({ session, stage }: { session: Session; stage?: St
           rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center rounded-full border-2 border-js-indigo-900 bg-white px-4 text-sm font-bold text-js-indigo-900"
         >
-          Google Calendar
+          {t.detail.googleCalendar}
         </a>
         {stage && (
           <Link
@@ -112,7 +111,7 @@ export function SessionDetail({ session, stage }: { session: Session; stage?: St
             className="inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 border-js-indigo-900 bg-white px-4 text-sm font-bold text-js-indigo-900"
           >
             <MapPin className="size-4" aria-hidden />
-            Cómo llegar
+            {t.detail.directions}
           </Link>
         )}
       </div>

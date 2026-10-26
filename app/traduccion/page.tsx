@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { TranslationView } from "@/components/translation/translation-view";
 import { getAgenda } from "@/lib/queries";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { TRANSLATION_ROOMS } from "@/lib/translation";
 
-export const metadata: Metadata = {
-  title: "Traducción",
-  description: "Traducción simultánea y subtítulos en vivo de cada sala de JSConf México 2026.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.meta.translationTitle, description: t.meta.translationDescription };
+}
 
 /**
  * `?sala=stage_a` abre directo la sala (para los QR de cada escenario). La
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
  * subtítulos van del navegador al runner, sin pasar por aquí.
  */
 export default async function TranslationPage({ searchParams }: PageProps<"/traduccion">) {
-  const [{ stages, sessions }, params] = await Promise.all([getAgenda(), searchParams]);
+  const [{ stages, sessions }, params] = await Promise.all([
+    getLocale().then(getAgenda),
+    searchParams,
+  ]);
   const sala = typeof params.sala === "string" ? params.sala : null;
   const roomIds = new Set(TRANSLATION_ROOMS.map((r) => r.stageId));
 

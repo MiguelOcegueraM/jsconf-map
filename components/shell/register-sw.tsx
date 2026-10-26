@@ -8,8 +8,17 @@ import { useEffect } from "react";
  */
 export function RegisterSW() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
+    if (process.env.NODE_ENV !== "production") {
+      // Un worker que quedó de un `npm start` en este mismo origen seguiría
+      // sirviendo chunks viejos de /_next/static/ en dev (los nombres se
+      // repiten), así que en desarrollo se da de baja.
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => regs.forEach((r) => r.unregister()))
+        .catch(() => {});
+      return;
+    }
 
     const register = () => {
       navigator.serviceWorker.register("/sw.js").catch(() => {

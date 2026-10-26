@@ -8,6 +8,7 @@ import {
   ZONE_STYLES,
   type VenueZone,
 } from "@/lib/venue";
+import { useI18n } from "@/lib/i18n/client";
 
 type Props = {
   selectedId: string | null;
@@ -28,12 +29,13 @@ function fitSize(text: string, available: number, base: number) {
 }
 
 export function VenueSvg({ selectedId, onSelect }: Props) {
+  const { t, locale } = useI18n();
   return (
     <svg
       viewBox={`0 0 ${VENUE_VIEWBOX.width} ${VENUE_VIEWBOX.height}`}
       className="h-full w-full touch-none select-none"
       role="group"
-      aria-label="Plano de Jardín Americana con Stage A, Stage B, Taller A, Taller B y los servicios de JSConf México 2026"
+      aria-label={t.map.svgLabel}
     >
       {/* Predio */}
       <rect
@@ -68,7 +70,7 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
           letterSpacing={2}
           className="fill-js-slate"
         >
-          AV. IGNACIO L. VALLARTA
+          {t.map.avenue}
         </text>
       </g>
 
@@ -94,7 +96,7 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
               fontWeight={500}
               letterSpacing={1}
             >
-              {s.label}
+              {s.label[locale]}
             </text>
           )}
         </g>
@@ -135,7 +137,7 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
           fontWeight={700}
           className="fill-js-red-600"
         >
-          ESCALERAS
+          {t.map.stairs}
         </text>
       </g>
 
@@ -162,7 +164,7 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
               }
             }}
           >
-            <title>{z.name}</title>
+            <title>{z.name[locale]}</title>
 
             {selected && (
               <rect
@@ -193,9 +195,9 @@ export function VenueSvg({ selectedId, onSelect }: Props) {
               transform={vertical ? `rotate(-90 ${cx} ${cy})` : undefined}
               pointerEvents="none"
             >
-              {z.label.map((line, i) => {
-                const first = i === 0 && z.label.length > 1;
-                const total = z.label.length;
+              {z.label[locale].map((line, i) => {
+                const first = i === 0 && z.label[locale].length > 1;
+                const total = z.label[locale].length;
                 const available = vertical ? z.h : z.w;
                 const size = fitSize(line, available, first ? 17 : total > 1 ? 21 : 23);
                 const offset = (i - (total - 1) / 2) * 26 + 7;

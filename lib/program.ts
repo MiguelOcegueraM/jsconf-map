@@ -1,12 +1,8 @@
 import type { Session, SessionType, Stage } from "./types";
+import type { Locale, Localized } from "./i18n/config";
 
 export const DAYS = ["2026-10-29", "2026-10-30"] as const;
 export type Day = (typeof DAYS)[number];
-
-export const DAY_LABELS: Record<Day, { short: string; long: string; n: string }> = {
-  "2026-10-29": { short: "29 oct", long: "Jueves 29 de octubre", n: "Día 1" },
-  "2026-10-30": { short: "30 oct", long: "Viernes 30 de octubre", n: "Día 2" },
-};
 
 /**
  * Los ids son los mismos `sala` que devuelve jsconf-agenda, y los nombres los
@@ -26,12 +22,18 @@ type GeneralSession = {
   day: Day;
   startTime: string;
   endTime: string;
-  stageId: null;
   type: SessionType;
-  title: string;
-  description?: string;
-  locationNote?: string;
+  title: Localized;
+  description?: Localized;
+  locationNote?: Localized;
 };
+
+const LOBBY: Localized = { es: "Registro & Lobby", en: "Registration & Lobby" };
+const NPM: Localized = { es: "NPM Zone", en: "NPM Zone" };
+const SOUTH: Localized = { es: "Jardín sur", en: "South garden" };
+const NORTH_NPM: Localized = { es: "NPM Zone · jardín norte", en: "NPM Zone · north garden" };
+const COFFEE: Localized = { es: "Coffee break", en: "Coffee break" };
+const LUNCH: Localized = { es: "Comida", en: "Lunch" };
 
 /**
  * Sólo actividades generales: la API de jsconf-agenda no las trae. Las
@@ -45,36 +47,63 @@ type GeneralSession = {
 const GENERAL: GeneralSession[] = [
   // ─────────────────────────── DÍA 1 ───────────────────────────
   {
-    id: "d1-registro", day: "2026-10-29", startTime: "09:00", endTime: "10:00",
-    stageId: null, type: "registration", title: "Registro y bienvenida",
-    locationNote: "Registro & Lobby",
-    description: "Recoge tu gafete en el stand de café de la esquina sureste.",
+    id: "d1-registro", day: "2026-10-29", startTime: "09:00", endTime: "10:00", type: "registration",
+    title: { es: "Registro y bienvenida", en: "Registration & welcome" },
+    locationNote: LOBBY,
+    description: {
+      es: "Recoge tu gafete en la esquina sureste del jardín sur, junto al acceso.",
+      en: "Pick up your badge in the south-east corner of the south garden, by the entrance.",
+    },
   },
-  { id: "d1-coffee-1", day: "2026-10-29", startTime: "12:00", endTime: "12:30", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
-  { id: "d1-lunch", day: "2026-10-29", startTime: "13:30", endTime: "15:00", stageId: null, type: "lunch", title: "Comida", locationNote: "Jardín sur" },
-  { id: "d1-coffee-2", day: "2026-10-29", startTime: "16:30", endTime: "16:50", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
-  { id: "d1-happy", day: "2026-10-29", startTime: "18:00", endTime: "20:00", stageId: null, type: "party", title: "Happy Hour", locationNote: "NPM Zone · jardín norte", description: "Cerveza, tacos y networking bajo las lonas." },
+  { id: "d1-coffee-1", day: "2026-10-29", startTime: "12:00", endTime: "12:30", type: "coffee", title: COFFEE, locationNote: NPM },
+  { id: "d1-lunch", day: "2026-10-29", startTime: "13:30", endTime: "15:00", type: "lunch", title: LUNCH, locationNote: SOUTH },
+  { id: "d1-coffee-2", day: "2026-10-29", startTime: "16:30", endTime: "16:50", type: "coffee", title: COFFEE, locationNote: NPM },
+  {
+    id: "d1-happy", day: "2026-10-29", startTime: "18:00", endTime: "20:00", type: "party",
+    title: { es: "Happy Hour", en: "Happy Hour" },
+    locationNote: NORTH_NPM,
+    description: {
+      es: "Cerveza, tacos y networking bajo las lonas.",
+      en: "Beer, tacos and networking under the canopies.",
+    },
+  },
 
   // ─────────────────────────── DÍA 2 ───────────────────────────
   {
-    id: "d2-registro", day: "2026-10-30", startTime: "09:00", endTime: "10:00",
-    stageId: null, type: "registration", title: "Registro",
-    locationNote: "Registro & Lobby",
-    description: "Si ya tienes gafete del día 1, pasa directo.",
+    id: "d2-registro", day: "2026-10-30", startTime: "09:00", endTime: "10:00", type: "registration",
+    title: { es: "Registro", en: "Registration" },
+    locationNote: LOBBY,
+    description: {
+      es: "Si ya tienes gafete del día 1, pasa directo.",
+      en: "Already have your day-1 badge? Walk straight in.",
+    },
   },
-  { id: "d2-coffee-1", day: "2026-10-30", startTime: "12:00", endTime: "12:30", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
-  { id: "d2-lunch", day: "2026-10-30", startTime: "13:30", endTime: "15:00", stageId: null, type: "lunch", title: "Comida", locationNote: "Jardín sur" },
-  { id: "d2-coffee-2", day: "2026-10-30", startTime: "16:30", endTime: "16:50", stageId: null, type: "coffee", title: "Coffee break", locationNote: "NPM Zone" },
-  { id: "d2-party", day: "2026-10-30", startTime: "18:00", endTime: "21:00", stageId: null, type: "party", title: "Closing Party", locationNote: "NPM Zone · jardín norte" },
+  { id: "d2-coffee-1", day: "2026-10-30", startTime: "12:00", endTime: "12:30", type: "coffee", title: COFFEE, locationNote: NPM },
+  { id: "d2-lunch", day: "2026-10-30", startTime: "13:30", endTime: "15:00", type: "lunch", title: LUNCH, locationNote: SOUTH },
+  { id: "d2-coffee-2", day: "2026-10-30", startTime: "16:30", endTime: "16:50", type: "coffee", title: COFFEE, locationNote: NPM },
+  {
+    id: "d2-party", day: "2026-10-30", startTime: "18:00", endTime: "21:00", type: "party",
+    title: { es: "Closing Party", en: "Closing Party" },
+    locationNote: NORTH_NPM,
+  },
 ];
 
-export const GENERAL_SESSIONS: Session[] = GENERAL.map((s) => ({
-  ...s,
-  description: s.description ?? null,
-  locationNote: s.locationNote ?? null,
-  speakerName: null,
-  speakerRole: null,
-  language: null,
-  sponsor: null,
-  speakers: [],
-}));
+/** Las actividades generales ya en el idioma de quien mira. */
+export function generalSessions(locale: Locale): Session[] {
+  return GENERAL.map((s) => ({
+    id: s.id,
+    day: s.day,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    stageId: null,
+    type: s.type,
+    title: s.title[locale],
+    description: s.description?.[locale] ?? null,
+    locationNote: s.locationNote?.[locale] ?? null,
+    speakerName: null,
+    speakerRole: null,
+    language: null,
+    sponsor: null,
+    speakers: [],
+  }));
+}

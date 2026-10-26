@@ -1,7 +1,10 @@
+"use client";
+
 import { Coffee, PartyPopper, Ticket, UtensilsCrossed } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Session, SessionType } from "@/lib/types";
-import { SESSION_TYPE_LABELS, formatRange } from "@/lib/agenda";
+import { formatRange } from "@/lib/agenda";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 const ICONS: Partial<Record<SessionType, LucideIcon>> = {
@@ -17,6 +20,7 @@ const ICONS: Partial<Record<SessionType, LucideIcon>> = {
  * índigo noche para que se lea como el cierre del día.
  */
 export function GeneralRow({ session, live = false }: { session: Session; live?: boolean }) {
+  const { t } = useI18n();
   const Icon = ICONS[session.type];
   const party = session.type === "party";
 
@@ -35,7 +39,7 @@ export function GeneralRow({ session, live = false }: { session: Session; live?:
       )}
       <div className="min-w-0 flex-1">
         <p className="text-[14px] leading-tight font-bold">
-          {session.title ?? SESSION_TYPE_LABELS[session.type]}
+          {session.title ?? t.sessionTypes[session.type]}
         </p>
         {session.locationNote && (
           <p className="mt-0.5 truncate text-xs font-medium opacity-80">{session.locationNote}</p>
@@ -49,7 +53,7 @@ export function GeneralRow({ session, live = false }: { session: Session; live?:
             : "border-js-slate-light bg-white text-js-indigo-900",
         )}
       >
-        {live ? "Ahora" : formatRange(session)}
+        {live ? t.agenda.now : formatRange(session)}
       </span>
     </div>
   );

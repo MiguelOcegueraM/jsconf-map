@@ -1,6 +1,7 @@
 "use client";
 
-import { DAY_LABELS, type Day } from "@/lib/program";
+import type { Day } from "@/lib/program";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 /** Los DayTabs de jsconf.mx. Sólo recibe los días que aún no terminan. */
@@ -13,11 +14,12 @@ export function DaySwitcher({
   value: Day;
   onChange: (day: Day) => void;
 }) {
+  const { t } = useI18n();
   return (
-    <div role="tablist" aria-label="Día del evento" className="flex gap-3">
+    <div role="tablist" aria-label={t.days.group} className="flex gap-3">
       {days.map((day) => {
         const active = day === value;
-        const label = DAY_LABELS[day];
+        const label = t.days[day];
         return (
           <button
             key={day}

@@ -14,7 +14,6 @@ import { ChevronDown, Star, StarOff } from "lucide-react";
 import type { Session, Stage } from "@/lib/types";
 import {
   TONE_CARD,
-  TONE_LABELS,
   TONE_PILL,
   formatRange,
   hasProvisionalTitle,
@@ -25,6 +24,7 @@ import {
   type SessionStatus,
 } from "@/lib/agenda";
 import { haptic } from "@/hooks/use-favorites";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 import { SessionDetail } from "./session-detail";
 
@@ -53,14 +53,15 @@ type Props = {
 
 const SPRING = { type: "spring", stiffness: 560, damping: 42 } as const;
 
-function workshopNote(session: Session) {
+/** "2 h 30 min": la nota del taller la arma el diccionario alrededor. */
+function workshopDuration(session: Session) {
   if (session.type !== "workshop") return null;
   const [sh, sm] = session.startTime.split(":").map(Number);
   const [eh, em] = session.endTime.split(":").map(Number);
   const total = eh * 60 + em - (sh * 60 + sm);
   const h = Math.floor(total / 60);
   const m = total % 60;
-  return `Taller de ${[h ? `${h} h` : "", m ? `${m} min` : ""].filter(Boolean).join(" ")} · trae tu laptop`;
+  return [h ? `${h} h` : "", m ? `${m} min` : ""].filter(Boolean).join(" ");
 }
 
 export function SessionCard({
@@ -76,6 +77,7 @@ export function SessionCard({
   onExited,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const { t } = useI18n();
   const reduced = useReducedMotion();
   const x = useMotionValue(0);
   /** Evita disparar la vibración en cada píxel mientras se arrastra. */
@@ -132,13 +134,14 @@ export function SessionCard({
     }
   }
 
-  const headline = sessionHeadline(session);
+  const headline = sessionHeadline(session, t.card.untitled);
   const provisional = hasProvisionalTitle(session);
   const tone = toneOf(session);
   const speakers = sessionSpeakers(session);
   const isKeynote = session.type === "keynote";
   const photo = isKeynote ? speakers[0]?.photoUrl : null;
-  const note = workshopNote(session);
+  const duration = workshopDuration(session);
+  const note = duration ? t.card.workshopNote(duration) : null;
   const panelId = `detalle-${session.id}`;
 
   return (
@@ -163,7 +166,7 @@ export function SessionCard({
       >
         <span className="flex items-center gap-2 text-sm font-bold text-js-indigo-900">
           <Star className="size-5 fill-current" />
-          Guardar
+          {t.card.save}
         </span>
       </motion.div>
       <motion.div
@@ -172,7 +175,7 @@ export function SessionCard({
         aria-hidden
       >
         <span className="flex items-center gap-2 text-sm font-bold text-white">
-          Quitar
+          {t.card.remove}
           <StarOff className="size-5" />
         </span>
       </motion.div>
@@ -204,12 +207,12 @@ export function SessionCard({
                 TONE_PILL[tone],
               )}
             >
-              {TONE_LABELS[tone]}
+              {t.tones[tone]}
             </span>
             {session.language && (
               <span
                 className="rounded-full border-2 border-js-indigo-900 px-1.5 text-[11px] font-bold"
-                title={session.language === "en" ? "En inglés" : "En español"}
+                title={t.card.inLanguage[session.language]}
               >
                 {session.language.toUpperCase()}
               </span>
@@ -217,7 +220,7 @@ export function SessionCard({
             {status === "live" ? (
               <span className="flex items-center gap-1 rounded-full bg-js-red-600 px-2 py-px text-[11px] font-bold text-white">
                 <span className="size-1.5 animate-pulse rounded-full bg-white" aria-hidden />
-                En vivo
+                {t.card.live}
               </span>
             ) : (
               <span className="text-xs font-semibold text-js-slate tabular-nums">
@@ -237,8 +240,8 @@ export function SessionCard({
             aria-pressed={isFavorite}
             aria-label={
               isFavorite
-                ? `Quitar «${headline}» de favoritos`
-                : `Guardar «${headline}» en favoritos`
+                ? t.card.removeLabel(headline)
+                : t.card.saveLabel(headline)
             }
             className={cn(
               "-mt-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-full",
@@ -288,16 +291,16 @@ export function SessionCard({
                 </span>
               )}
               {provisional && (
-                <span className="text-xs text-js-slate italic">Título por confirmar</span>
+                <span className="text-xs text-js-slate italic">{t.card.provisional}</span>
               )}
             </span>
           </span>
           {session.sponsor && (
-            <span className="text-xs font-semibold">Presentada por {session.sponsor}</span>
+            <span className="text-xs font-semibold">{t.card.sponsoredBy(session.sponsor)}</span>
           )}
           {note && <span className="text-xs font-semibold text-js-blue-900">{note}</span>}
           <span className="flex items-center gap-1.5 text-[13px] font-bold text-js-indigo-500">
-            {expanded ? "Ocultar detalle" : "Ver detalle"}
+            {expanded ? t.card.hideDetail : t.card.showDetail}
             <ChevronDown
               className={cn("size-3.5 transition-transform", expanded && "rotate-180")}
               strokeWidth={2.5}

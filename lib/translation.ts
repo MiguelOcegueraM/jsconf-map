@@ -51,4 +51,3 @@ export type CaptionLine = {
 };
 
 export const LANGUAGE_SHORT: Record<string, string> = { es: "ES", en: "EN" };
-export const LANGUAGE_NAMES: Record<string, string> = { es: "español", en: "inglés" };

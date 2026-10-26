@@ -14,6 +14,7 @@ import {
   stageMap,
 } from "@/lib/agenda";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useI18n } from "@/lib/i18n/client";
 import { useEventNow } from "@/hooks/use-event-now";
 import { PageHero } from "@/components/shell/page-hero";
 import { DaySwitcher } from "./day-switcher";
@@ -50,6 +51,7 @@ export function AgendaView({
   const [openId, setOpenId] = useState<string | null>(null);
   const { has, add, remove } = useFavorites();
   const now = useEventNow();
+  const { t } = useI18n();
 
   const stages = useMemo(() => stageMap(agenda.stages), [agenda.stages]);
 
@@ -104,16 +106,15 @@ export function AgendaView({
   return (
     <div className="flex flex-col">
       <PageHero
-        title="Agenda"
+        title={t.agenda.title}
         aside={
           <p className="mb-1 flex shrink-0 items-center gap-1.5 rounded-full border-2 border-js-indigo-900 bg-white px-3 py-1 text-xs font-semibold">
             <Clock className="size-3.5" aria-hidden />
-            Hora de GDL
+            {t.agenda.timezone}
           </p>
         }
       >
-        Dos días, cuatro salas: keynotes, charlas y talleres. Toca una sesión para leer el
-        resumen.
+        {t.agenda.intro}
       </PageHero>
 
       <div className="flex flex-col gap-4 border-b-[3px] border-js-indigo-900 bg-white px-4 py-4">
@@ -121,43 +122,43 @@ export function AgendaView({
           <DaySwitcher days={days} value={activeDay} onChange={setDay} />
         ) : (
           <p className="font-display text-lg text-js-indigo-900 uppercase">
-            {activeDay === DAYS[1] ? "Día 2" : "Día 1"}
+            {t.days[activeDay].n}
             <span className="ml-2 font-sans text-sm font-medium normal-case">
-              {activeDay === DAYS[1] ? "Viernes 30 de octubre" : "Jueves 29 de octubre"}
+              {t.days[activeDay].long}
             </span>
           </p>
         )}
 
         <div className="-mx-4 flex flex-col gap-2.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <FilterGroup
-            label="Sala"
+            label={t.agenda.filterRoom}
             value={stageId}
             onChange={setStageId}
             options={[
-              { value: ALL, label: "Todas" },
+              { value: ALL, label: t.agenda.allRooms },
               ...agenda.stages.map((s) => ({ value: s.id, label: s.name })),
             ]}
           />
           <div className="flex gap-5">
             <FilterGroup
-              label="Idioma"
+              label={t.agenda.filterLanguage}
               value={language}
               onChange={setLanguage}
               options={[
-                { value: ALL, label: "Todos" },
+                { value: ALL, label: t.agenda.allLanguages },
                 { value: "es", label: "ES" },
                 { value: "en", label: "EN" },
               ]}
             />
             <FilterGroup
-              label="Tipo"
+              label={t.agenda.filterType}
               value={kind}
               onChange={setKind}
               options={[
-                { value: ALL, label: "Todo" },
-                { value: "keynote", label: "Keynotes" },
-                { value: "charla", label: "Charlas" },
-                { value: "taller", label: "Talleres" },
+                { value: ALL, label: t.agenda.allTypes },
+                { value: "keynote", label: t.agenda.keynotes },
+                { value: "charla", label: t.agenda.talks },
+                { value: "taller", label: t.agenda.workshops },
               ]}
             />
           </div>
@@ -171,18 +172,18 @@ export function AgendaView({
         >
           <TriangleAlert className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden />
           <p className="text-sm leading-snug">
-            <strong className="font-bold">Sujeto a cambios.</strong>{" "}
+            <strong className="font-bold">{t.agenda.noticeTitle}</strong>{" "}
             {agenda.unavailable
-              ? "No pudimos cargar las charlas en este momento. Recarga en un rato; mientras, aquí están registro, comidas y fiestas."
+              ? t.agenda.noticeUnavailable
               : eventOver
-                ? "JSConf México 2026 ya terminó — ¡gracias por venir! Aquí queda el programa completo."
-                : "La agenda se actualiza con el programa oficial de jsconf.mx. Las sesiones que terminan salen solas de la lista."}
+                ? t.agenda.noticeOver
+                : t.agenda.noticeDefault}
           </p>
         </div>
 
         <p className="flex items-center gap-2 text-xs font-medium text-js-slate">
           <Hand className="size-4 shrink-0" aria-hidden />
-          Desliza una charla a la derecha para guardarla, a la izquierda para quitarla.
+          {t.agenda.swipeHint}
         </p>
 
         {pastCount > 0 && !eventOver && (
@@ -193,9 +194,7 @@ export function AgendaView({
             className="flex min-h-10 items-center justify-center gap-2 rounded-full border-2 border-dashed border-js-slate-light px-4 text-[13px] font-semibold text-js-slate transition-colors hover:bg-js-haze"
           >
             <History className="size-4" aria-hidden />
-            {showPast
-              ? "Ocultar lo que ya pasó"
-              : `Ver ${pastCount} ${pastCount === 1 ? "sesión que ya terminó" : "sesiones que ya terminaron"}`}
+            {showPast ? t.agenda.hidePast : t.agenda.showPast(pastCount)}
           </button>
         )}
 
@@ -210,9 +209,7 @@ export function AgendaView({
           >
             {slots.length === 0 ? (
               <p className="radius-panel border-[3px] border-dashed border-js-slate-light px-6 py-8 text-center font-medium text-js-slate">
-                {filtersActive
-                  ? "Ninguna sesión coincide con esos filtros."
-                  : "Ya no quedan sesiones este día."}
+                {filtersActive ? t.agenda.noMatches : t.agenda.dayEmpty}
               </p>
             ) : (
               slots.map(({ time, sessions }) => (

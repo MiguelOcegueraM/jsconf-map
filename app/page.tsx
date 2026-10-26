@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { VenueMap } from "@/components/map/venue-map";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Mapa del venue",
-  description:
-    "Plano interactivo de Jardín Americana: Stage A, Stage B, Taller A, Taller B, registro y cowork.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.meta.mapTitle, description: t.meta.mapDescription };
+}
 
 export default function MapPage() {
   return <VenueMap />;

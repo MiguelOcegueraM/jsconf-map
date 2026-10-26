@@ -7,6 +7,7 @@ import { TRANSLATION_ROOMS, translationRoom } from "@/lib/translation";
 import { formatTime, sessionHeadline, sessionStatus } from "@/lib/agenda";
 import { useEventNow } from "@/hooks/use-event-now";
 import { PageHero } from "@/components/shell/page-hero";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 import { RoomListener } from "./room-listener";
 
@@ -32,6 +33,7 @@ export function TranslationView({
 
 function RoomPicker({ stages, sessions }: { stages: Stage[]; sessions: Session[] }) {
   const now = useEventNow();
+  const { t } = useI18n();
 
   /** Lo que pasa ahora en la sala, o lo siguiente de hoy. */
   function happening(stageId: string) {
@@ -40,17 +42,14 @@ function RoomPicker({ stages, sessions }: { stages: Stage[]; sessions: Session[]
       .filter((s) => s.stageId === stageId && s.day === now.slice(0, 10))
       .filter((s) => sessionStatus(s, now) !== "past");
     const live = today.find((s) => sessionStatus(s, now) === "live");
-    if (live) return { label: "Ahora", session: live };
+    if (live) return { label: t.translation.nowOn, session: live };
     const next = today[0];
-    return next ? { label: `A las ${formatTime(next.startTime)}`, session: next } : null;
+    return next ? { label: t.translation.at(formatTime(next.startTime)), session: next } : null;
   }
 
   return (
     <div className="flex flex-col">
-      <PageHero title="Traducción">
-        Escucha cada charla traducida en vivo o sigue los subtítulos. Elige la sala donde
-        estás.
-      </PageHero>
+      <PageHero title={t.translation.title}>{t.translation.intro}</PageHero>
 
       <div className="flex flex-col gap-4 px-4 pt-5 pb-10">
         {TRANSLATION_ROOMS.map((room) => {
@@ -96,13 +95,13 @@ function RoomPicker({ stages, sessions }: { stages: Stage[]; sessions: Session[]
                         : "border-2 border-js-slate-light text-js-slate",
                     )}
                   >
-                    {room.available ? "Disponible" : "Próximamente"}
+                    {room.available ? t.translation.available : t.translation.soon}
                   </span>
                 </span>
                 {info && (
                   <span className="truncate text-[13px]">
                     <strong className="font-bold">{info.label}:</strong>{" "}
-                    {sessionHeadline(info.session)}
+                    {sessionHeadline(info.session, t.card.untitled)}
                   </span>
                 )}
               </span>
@@ -116,6 +115,7 @@ function RoomPicker({ stages, sessions }: { stages: Stage[]; sessions: Session[]
 }
 
 function ComingSoon({ stage }: { stage: Stage }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col">
       <PageHero title={stage.name} />
@@ -124,17 +124,14 @@ function ComingSoon({ stage }: { stage: Stage }) {
           <span className="grid size-14 place-items-center rounded-full border-[3px] border-js-indigo-900 bg-js-yellow-500">
             <Clock className="size-7" aria-hidden />
           </span>
-          <p className="font-display text-lg">Próximamente</p>
-          <p className="max-w-xs text-sm text-js-slate">
-            La traducción en vivo del {stage.name} todavía no está lista. Por ahora la tienes
-            en Stage A y Stage B.
-          </p>
+          <p className="font-display text-lg">{t.translation.soonTitle}</p>
+          <p className="max-w-xs text-sm text-js-slate">{t.translation.soonBody(stage.name)}</p>
           <Link
             href="/traduccion"
             className="mt-2 inline-flex min-h-12 items-center gap-2 rounded-full border-[3px] border-js-indigo-900 bg-js-indigo-500 px-6 text-[15px] font-bold text-white shadow-[4px_4px_0_0_#f3ba20]"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Ver salas
+            {t.translation.seeRooms}
           </Link>
         </div>
       </div>

@@ -46,8 +46,8 @@ export function stageMap(stages: Stage[]) {
 }
 
 /** Etiqueta visible de una sesión: cae al nombre del speaker si no hay título. */
-export function sessionHeadline(s: Session) {
-  return s.title ?? s.speakerName ?? "Sesión por anunciar";
+export function sessionHeadline(s: Session, untitled = "Sesión por anunciar") {
+  return s.title ?? s.speakerName ?? untitled;
 }
 
 export function hasProvisionalTitle(s: Session) {
@@ -87,17 +87,6 @@ export function initials(name: string) {
     .toUpperCase();
 }
 
-export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
-  keynote: "Keynote",
-  talk: "Charla",
-  workshop: "Taller",
-  lightning: "Lightning talks",
-  registration: "Registro",
-  coffee: "Coffee break",
-  lunch: "Comida",
-  party: "Fiesta",
-  closing: "Cierre",
-};
 
 /* ------------------------------------------------------------------ */
 /*  Tonos (mismos que la agenda de jsconf.mx, repo cacao)              */
@@ -113,12 +102,6 @@ export function toneOf(s: Pick<Session, "type" | "sponsor">): SessionTone {
   return "charla";
 }
 
-export const TONE_LABELS: Record<SessionTone, string> = {
-  keynote: "Keynote",
-  charla: "Charla",
-  taller: "Taller",
-  sponsored: "Patrocinada",
-};
 
 // Clases literales para que Tailwind las vea.
 export const TONE_PILL: Record<SessionTone, string> = {

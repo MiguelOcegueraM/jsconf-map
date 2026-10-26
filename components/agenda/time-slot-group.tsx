@@ -1,4 +1,7 @@
+"use client";
+
 import { formatTime } from "@/lib/agenda";
+import { useI18n } from "@/lib/i18n/client";
 
 /** Una fila de la línea de tiempo, como la lista móvil de jsconf.mx: hora a la izquierda. */
 export function TimeSlotGroup({
@@ -8,8 +11,9 @@ export function TimeSlotGroup({
   time: string;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
-    <section aria-label={`Sesiones de las ${formatTime(time)}`} className="flex gap-3">
+    <section aria-label={t.agenda.slotLabel(formatTime(time))} className="flex gap-3">
       <h2 className="w-11 shrink-0 pt-1 text-[15px] font-bold text-js-indigo-900 tabular-nums">
         {formatTime(time)}
       </h2>

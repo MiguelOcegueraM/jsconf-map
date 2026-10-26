@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft, Captions, Headphones, Smartphone, Volume2 } from "lucide-react";
 import type { Stage } from "@/lib/types";
 import {
-  LANGUAGE_NAMES,
   LANGUAGE_SHORT,
   type AudioChoice,
   type CaptionKind,
@@ -15,6 +14,7 @@ import {
 import { PcmPlayer, STREAM_BYTE } from "@/lib/pcm-player";
 import { useRoomListener, type Connection } from "@/hooks/use-room-listener";
 import { useWakeLock } from "@/hooks/use-wake-lock";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,6 +29,7 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
     original: true,
   });
   const [audioError, setAudioError] = useState(false);
+  const { t } = useI18n();
   const playerRef = useRef<PcmPlayer | null>(null);
 
   const onAudio = useCallback(
@@ -78,6 +79,8 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
 
   const source = status?.session?.language ?? "es";
   const target = status?.translationLanguage ?? (source === "es" ? "en" : "es");
+  const inline = (code: string) =>
+    code === "es" || code === "en" ? t.languageInline[code] : code;
 
   return (
     <div className="flex flex-col">
@@ -87,7 +90,7 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
           className="flex w-fit items-center gap-1.5 text-sm font-semibold text-js-indigo-900"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Salas
+          {t.translation.rooms}
         </Link>
         <div className="mt-2 flex items-end justify-between gap-3">
           <h1 className="font-display typography-shadow text-[34px] leading-[1.1] text-js-indigo-900">
@@ -104,9 +107,8 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
         >
           <Smartphone className="mt-0.5 size-5 shrink-0" aria-hidden />
           <p className="text-sm leading-snug">
-            <strong className="font-bold">Usuarios de iPhone:</strong> no bloqueen la
-            pantalla mientras escuchan — iOS corta el audio. Si no oyes nada, revisa el
-            botón de silencio del teléfono.
+            <strong className="font-bold">{t.translation.iphoneTitle}</strong>{" "}
+            {t.translation.iphoneBody}
           </p>
         </div>
 
@@ -114,53 +116,52 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
 
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-[11px] font-bold tracking-[0.12em] text-js-slate uppercase">
-            ¿Cómo quieres seguirla?
+            {t.translation.howTo}
           </legend>
           <div className="grid grid-cols-3 gap-2">
             <AudioOption
               active={audio === "none"}
               onClick={() => choose("none")}
               icon={<Captions className="size-5" aria-hidden />}
-              label="Subtítulos"
-              hint="sin audio"
+              label={t.translation.captionsOnly}
+              hint={t.translation.noAudio}
             />
             <AudioOption
               active={audio === "translation"}
               onClick={() => choose("translation")}
               icon={<Headphones className="size-5" aria-hidden />}
-              label="Traducido"
-              hint={`al ${LANGUAGE_NAMES[target] ?? target}`}
+              label={t.translation.translated}
+              hint={t.translation.translatedTo(inline(target))}
             />
             <AudioOption
               active={audio === "original"}
               onClick={() => choose("original")}
               icon={<Volume2 className="size-5" aria-hidden />}
-              label="Original"
-              hint={`en ${LANGUAGE_NAMES[source] ?? source}`}
+              label={t.translation.original}
+              hint={t.translation.originalIn(inline(source))}
             />
           </div>
           {audio !== "none" && (
             <p className="text-xs font-medium text-js-slate">
-              Usa audífonos para no molestar a quien está junto a ti.
+              {t.translation.headphones}
             </p>
           )}
           {audioError && (
             <p role="alert" className="text-sm font-semibold text-js-red-700">
-              Este navegador no dejó reproducir audio. Intenta de nuevo o sigue los
-              subtítulos.
+              {t.translation.audioError}
             </p>
           )}
         </fieldset>
 
         <CaptionTrack
-          title={`Traducción · ${LANGUAGE_SHORT[target] ?? target.toUpperCase()}`}
+          title={t.translation.trackTranslation(LANGUAGE_SHORT[target] ?? target.toUpperCase())}
           lines={captions.translation}
           shown={visible.translation}
           onToggle={() => setVisible((v) => ({ ...v, translation: !v.translation }))}
           emphasis
         />
         <CaptionTrack
-          title={`Original · ${LANGUAGE_SHORT[source] ?? source.toUpperCase()}`}
+          title={t.translation.trackOriginal(LANGUAGE_SHORT[source] ?? source.toUpperCase())}
           lines={captions.original}
           shown={visible.original}
           onToggle={() => setVisible((v) => ({ ...v, original: !v.original }))}
@@ -171,6 +172,7 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
 }
 
 function ConnectionBadge({ connection }: { connection: Connection }) {
+  const { t } = useI18n();
   const open = connection === "open";
   return (
     <span
@@ -181,19 +183,24 @@ function ConnectionBadge({ connection }: { connection: Connection }) {
         className={cn("size-2 rounded-full", open ? "bg-emerald-500" : "animate-pulse bg-js-yellow-500")}
         aria-hidden
       />
-      {open ? "Conectado" : connection === "connecting" ? "Conectando…" : "Reconectando…"}
+      {open
+        ? t.translation.connected
+        : connection === "connecting"
+          ? t.translation.connecting
+          : t.translation.reconnecting}
     </span>
   );
 }
 
 function StatusCard({ status }: { status: ReturnType<typeof useRoomListener>["status"] }) {
+  const { t } = useI18n();
   const mode = status?.mode ?? "idle";
   const badge =
     mode === "live"
-      ? { text: "En vivo", className: "bg-js-red-600 text-white" }
+      ? { text: t.translation.modeLive, className: "bg-js-red-600 text-white" }
       : mode === "test"
-        ? { text: "Prueba de audio", className: "bg-js-yellow-500 text-js-indigo-900" }
-        : { text: "Sin transmisión", className: "bg-js-haze text-js-slate" };
+        ? { text: t.translation.modeTest, className: "bg-js-yellow-500 text-js-indigo-900" }
+        : { text: t.translation.modeIdle, className: "bg-js-haze text-js-slate" };
 
   return (
     <div className="radius-card border-[3px] border-js-indigo-900 bg-white px-4 py-3 shadow-[4px_4px_0_0_#2630c3]">
@@ -213,9 +220,7 @@ function StatusCard({ status }: { status: ReturnType<typeof useRoomListener>["st
         </>
       ) : (
         <p className="mt-2 text-sm text-js-slate">
-          {status
-            ? "Ahora no hay traducción en esta sala. En cuanto empiece la charla, los subtítulos aparecen aquí solos."
-            : "Conectando con la sala…"}
+          {status ? t.translation.idleBody : t.translation.connectingBody}
         </p>
       )}
     </div>
@@ -272,6 +277,7 @@ function CaptionTrack({
   emphasis?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   // Siempre pegado a la última línea conforme entra texto.
   useEffect(() => {
@@ -289,7 +295,7 @@ function CaptionTrack({
           aria-pressed={shown}
           className="rounded-full border-2 border-js-indigo-900 px-2.5 py-0.5 text-[11px] font-bold"
         >
-          {shown ? "Ocultar" : "Mostrar"}
+          {shown ? t.translation.hide : t.translation.show}
         </button>
       </div>
       {shown && (
@@ -302,7 +308,7 @@ function CaptionTrack({
           )}
         >
           {lines.length === 0 ? (
-            <p className="text-sm text-js-slate">Los subtítulos aparecen aquí en cuanto alguien habla.</p>
+            <p className="text-sm text-js-slate">{t.translation.waiting}</p>
           ) : (
             lines.map((line) => (
               <p

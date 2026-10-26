@@ -4,13 +4,14 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell, BellOff, BellRing, CalendarPlus, History, Star, Trash2 } from "lucide-react";
 import type { Agenda } from "@/lib/queries";
-import { DAYS, DAY_LABELS } from "@/lib/program";
+import { DAYS } from "@/lib/program";
 import { groupByTime, isDayOver, sessionStatus, stageMap } from "@/lib/agenda";
 import { downloadIcs } from "@/lib/ics";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useEventNow } from "@/hooks/use-event-now";
 import { REMINDER_LEAD_MIN, useReminders } from "@/hooks/use-reminders";
 import { PageHero } from "@/components/shell/page-hero";
+import { useI18n } from "@/lib/i18n/client";
 import { SessionCard } from "./session-card";
 import { TimeSlotGroup } from "./time-slot-group";
 
@@ -19,6 +20,7 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
   const stages = useMemo(() => stageMap(agenda.stages), [agenda.stages]);
   const now = useEventNow();
   const [showPast, setShowPast] = useState(false);
+  const { t } = useI18n();
 
   /**
    * Quitar un favorito aquí lo saca de la lista, y si era el único de su hora
@@ -69,10 +71,8 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
 
   return (
     <div className="flex flex-col">
-      <PageHero title="Mis favoritos">
-        {chosen.length === 0
-          ? "Tu agenda curada, guardada en este dispositivo."
-          : `${chosen.length} ${chosen.length === 1 ? "sesión guardada" : "sesiones guardadas"} en este dispositivo.`}
+      <PageHero title={t.favorites.title}>
+        {chosen.length === 0 ? t.favorites.emptyIntro : t.favorites.count(chosen.length)}
       </PageHero>
 
       <div className="flex flex-col gap-4 px-4 pt-5 pb-10">
@@ -83,11 +83,11 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => downloadIcs(upcoming.length ? upcoming : chosen, stages, "jsconf-mx-2026.ics")}
+                onClick={() => downloadIcs(upcoming.length ? upcoming : chosen, stages, t.favorites.icsFile)}
                 className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full border-[3px] border-js-indigo-900 bg-js-indigo-500 px-4 text-[15px] font-bold text-white shadow-[4px_4px_0_0_#f3ba20] transition-colors hover:bg-js-indigo-700"
               >
                 <CalendarPlus className="size-4" aria-hidden />
-                Añadir todo al calendario
+                {t.favorites.addAll}
               </button>
               <button
                 type="button"
@@ -95,7 +95,7 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
                   setExiting([]);
                   clear();
                 }}
-                aria-label="Vaciar favoritos"
+                aria-label={t.favorites.clear}
                 className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-js-indigo-900 bg-white text-js-indigo-900 hover:bg-js-haze"
               >
                 <Trash2 className="size-4" aria-hidden />
@@ -112,24 +112,22 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
                 className="flex min-h-10 items-center justify-center gap-2 rounded-full border-2 border-dashed border-js-slate-light px-4 text-[13px] font-semibold text-js-slate transition-colors hover:bg-js-haze"
               >
                 <History className="size-4" aria-hidden />
-                {showPast
-                  ? "Ocultar lo que ya pasó"
-                  : `Ver ${pastCount} ${pastCount === 1 ? "favorito que ya terminó" : "favoritos que ya terminaron"}`}
+                {showPast ? t.favorites.hidePast : t.favorites.showPast(pastCount)}
               </button>
             )}
 
             {byDay.length === 0 && (
               <p className="radius-panel border-[3px] border-dashed border-js-slate-light px-6 py-8 text-center font-medium text-js-slate">
-                Todos tus favoritos ya pasaron.
+                {t.favorites.allPast}
               </p>
             )}
 
             {byDay.map(({ day, slots }) => (
               <section key={day} className="flex flex-col gap-4">
                 <h2 className="font-display sticky top-[135px] z-10 -mx-4 border-y-2 border-js-indigo-900 bg-js-lavender px-4 py-1.5 text-sm text-js-indigo-900 uppercase">
-                  {DAY_LABELS[day].n}
+                  {t.days[day].n}
                   <span className="ml-2 font-sans text-xs font-medium normal-case">
-                    {DAY_LABELS[day].long}
+                    {t.days[day].long}
                   </span>
                 </h2>
                 {slots.map(({ time, sessions }) => (
@@ -161,12 +159,12 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
 
 function ReminderToggle() {
   const { state, enable, disable } = useReminders();
+  const { t } = useI18n();
   if (state === "unsupported") {
     return (
       <p className="radius-card flex items-start gap-3 border-2 border-js-slate-light bg-white px-4 py-3 text-sm text-js-slate">
         <BellOff className="mt-0.5 size-5 shrink-0" aria-hidden />
-        Este navegador no permite avisos. En iPhone, instala la app en tu pantalla de inicio
-        (Compartir → Agregar a inicio) para activarlos — o usa «Añadir al calendario».
+        {t.reminders.unsupported}
       </p>
     );
   }
@@ -180,11 +178,11 @@ function ReminderToggle() {
         <Bell className="size-5 shrink-0" aria-hidden />
       )}
       <p className="min-w-0 flex-1 text-sm leading-snug">
-        <strong className="font-bold">Recordatorios</strong>
+        <strong className="font-bold">{t.reminders.title}</strong>
         <span className="block text-xs text-js-slate">
           {state === "denied"
-            ? "Bloqueaste los avisos; actívalos en los ajustes del navegador."
-            : `Un aviso ${REMINDER_LEAD_MIN} min antes de cada favorito, con la app abierta o en segundo plano.`}
+            ? t.reminders.denied
+            : t.reminders.description(REMINDER_LEAD_MIN)}
         </span>
       </p>
       {state !== "denied" && (
@@ -199,7 +197,7 @@ function ReminderToggle() {
               : "min-h-9 shrink-0 rounded-full border-2 border-js-indigo-900 bg-js-yellow-500 px-3.5 text-[13px] font-bold text-js-indigo-900"
           }
         >
-          {on ? "Activados" : "Activar"}
+          {on ? t.reminders.enabled : t.reminders.enable}
         </button>
       )}
     </div>
@@ -207,21 +205,21 @@ function ReminderToggle() {
 }
 
 function EmptyState() {
+  const { t } = useI18n();
   return (
     <div className="radius-panel flex flex-col items-center gap-3 border-[3px] border-dashed border-js-slate-light px-6 py-12 text-center">
       <span className="grid size-14 place-items-center rounded-full border-[3px] border-js-indigo-900 bg-js-yellow-500">
         <Star className="size-7 text-js-indigo-900" />
       </span>
-      <p className="font-display text-lg text-js-indigo-900">Todavía no guardas nada</p>
+      <p className="font-display text-lg text-js-indigo-900">{t.favorites.emptyTitle}</p>
       <p className="max-w-xs text-sm text-js-slate">
-        Desliza una charla a la derecha en la agenda —o toca su estrella— y aparecerá aquí,
-        ordenada por día y hora.
+        {t.favorites.emptyBody}
       </p>
       <Link
         href="/agenda"
         className="mt-2 inline-flex min-h-12 items-center rounded-full border-[3px] border-js-indigo-900 bg-js-indigo-500 px-6 text-[15px] font-bold text-white shadow-[4px_4px_0_0_#f3ba20] transition-colors hover:bg-js-indigo-700"
       >
-        Ir a la agenda
+        {t.favorites.goToAgenda}
       </Link>
     </div>
   );

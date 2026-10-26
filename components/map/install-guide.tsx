@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Download, EllipsisVertical, Share, SquarePlus } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 
 /** El evento que Chrome dispara cuando la app es instalable (no está en lib.dom). */
 type InstallPromptEvent = Event & {
@@ -31,6 +32,7 @@ function isStandalone() {
 export function InstallGuide() {
   const installed = useSyncExternalStore(subscribeStandalone, isStandalone, () => false);
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
@@ -73,11 +75,9 @@ export function InstallGuide() {
         />
         <div>
           <h2 id="instalar-titulo" className="font-display text-xl leading-tight">
-            Llévala en tu inicio
+            {t.install.title}
           </h2>
-          <p className="text-sm leading-snug">
-            Abre como app, funciona sin señal y te avisa antes de tus charlas.
-          </p>
+          <p className="text-sm leading-snug">{t.install.body}</p>
         </div>
       </div>
 
@@ -88,42 +88,47 @@ export function InstallGuide() {
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-[3px] border-js-indigo-900 bg-js-indigo-500 px-5 text-[15px] font-bold text-white shadow-[4px_4px_0_0_#f3ba20] transition-colors hover:bg-js-indigo-700"
         >
           <Download className="size-4" aria-hidden />
-          Instalar JSConf MX
+          {t.install.button}
         </button>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Steps
-          title="iPhone · Safari"
+          title={t.install.iosTitle}
           steps={[
             <>
-              Toca <Share className="inline size-4 align-[-3px]" aria-label="Compartir" />{" "}
-              <strong>Compartir</strong> en la barra de abajo.
+              {t.install.iosStep1Before}{" "}
+              <Share className="inline size-4 align-[-3px]" aria-hidden />{" "}
+              <strong>{t.install.iosShare}</strong> {t.install.iosStep1}
             </>,
             <>
-              Elige{" "}
+              {t.install.iosStep2Before}{" "}
               <SquarePlus className="inline size-4 align-[-3px]" aria-hidden />{" "}
-              <strong>Agregar a inicio</strong>.
+              <strong>{t.install.iosStep2}</strong>.
             </>,
             <>
-              Toca <strong>Agregar</strong>. Ábrela desde tu pantalla de inicio.
+              {t.install.iosStep3Before} <strong>{t.install.iosStep3}</strong>
+              {t.install.iosStep3After}
             </>,
           ]}
         />
         <Steps
-          title="Android · Chrome"
+          title={t.install.androidTitle}
           steps={[
             <>
-              Toca el menú{" "}
-              <EllipsisVertical className="inline size-4 align-[-3px]" aria-label="tres puntos" />{" "}
-              arriba a la derecha.
+              {t.install.androidStep1Before}{" "}
+              <EllipsisVertical
+                className="inline size-4 align-[-3px]"
+                aria-label={t.install.androidMenu}
+              />{" "}
+              {t.install.androidStep1After}
             </>,
             <>
-              Elige <strong>Instalar app</strong> o{" "}
-              <strong>Agregar a pantalla principal</strong>.
+              {t.install.androidStep2Before} <strong>{t.install.androidStep2A}</strong>{" "}
+              {t.install.androidStep2Or} <strong>{t.install.androidStep2B}</strong>.
             </>,
             <>
-              Confirma con <strong>Instalar</strong>.
+              {t.install.androidStep3Before} <strong>{t.install.androidStep3}</strong>.
             </>,
           ]}
         />

@@ -11,6 +11,8 @@
  * El norte del plano apunta hacia ARRIBA en este viewBox.
  */
 
+import type { Localized } from "./i18n/config";
+
 /** El alto incluye la franja de Av. Ignacio L. Vallarta al sur del predio. */
 export const VENUE_VIEWBOX = { width: 1000, height: 1805 } as const;
 
@@ -27,9 +29,9 @@ export type Level = "planta-baja" | "planta-alta";
 
 export interface VenueZone {
   id: string;
-  name: string;
+  name: Localized;
   /** Etiqueta corta que cabe dentro del polígono en móvil. */
-  label: string[];
+  label: Localized<string[]>;
   kind: ZoneKind;
   level: Level;
   x: number;
@@ -38,9 +40,9 @@ export interface VenueZone {
   h: number;
   /** Radio de esquina; los escenarios son más redondos que las salas. */
   r?: number;
-  description: string;
+  description: Localized;
   /** Instrucción práctica de cómo llegar. */
-  howTo?: string;
+  howTo?: Localized;
   /** Marca los 6 puntos que el asistente necesita sí o sí. */
   key?: boolean;
 }
@@ -49,7 +51,7 @@ export interface VenueZone {
 export const VENUE_SURFACES = [
   {
     id: "jardin-norte",
-    label: "Jardín norte",
+    label: { es: "Jardín norte", en: "North garden" },
     x: 110,
     y: 20,
     w: 650,
@@ -70,7 +72,7 @@ export const VENUE_SURFACES = [
   },
   {
     id: "casa",
-    label: "La casa",
+    label: { es: "La casa", en: "The house" },
     x: 175,
     y: 830,
     w: 480,
@@ -80,7 +82,7 @@ export const VENUE_SURFACES = [
   },
   {
     id: "patio",
-    label: "Patio casa",
+    label: { es: "Patio casa", en: "House patio" },
     x: 320,
     y: 905,
     w: 200,
@@ -90,7 +92,7 @@ export const VENUE_SURFACES = [
   },
   {
     id: "jardin-sur",
-    label: "Jardín sur",
+    label: { es: "Jardín sur", en: "South garden" },
     x: 655,
     y: 1200,
     w: 320,
@@ -103,8 +105,8 @@ export const VENUE_SURFACES = [
 export const VENUE_ZONES: VenueZone[] = [
   {
     id: "stage-a",
-    name: "Stage A",
-    label: ["STAGE A"],
+    name: { es: "Stage A", en: "Stage A" },
+    label: { es: ["STAGE A"], en: ["STAGE A"] },
     kind: "stage",
     level: "planta-baja",
     x: 811,
@@ -113,15 +115,19 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 360,
     r: 18,
     key: true,
-    description:
-      "El escenario principal (antes «Main Stage»): keynotes y la mayoría de las charlas. Al aire libre sobre el pasillo oriente, a un costado del jardín norte.",
-    howTo:
-      "Desde el acceso (jardín sur, sobre Av. Ignacio L. Vallarta) sube por el pasillo oriente hacia el norte: el Stage A está a lo largo del pasillo.",
+    description: {
+      es: "El escenario principal (antes «Main Stage»): keynotes y la mayoría de las charlas. Al aire libre sobre el pasillo oriente, a un costado del jardín norte.",
+      en: "The main stage (formerly “Main Stage”): keynotes and most talks. Open-air, along the east corridor beside the north garden.",
+    },
+    howTo: {
+      es: "Desde el acceso (jardín sur, sobre Av. Ignacio L. Vallarta) sube por el pasillo oriente hacia el norte: el Stage A está a lo largo del pasillo.",
+      en: "From the entrance (south garden, on Av. Ignacio L. Vallarta) head north along the east corridor: Stage A runs alongside it.",
+    },
   },
   {
     id: "stage-b",
-    name: "Stage B",
-    label: ["STAGE B"],
+    name: { es: "Stage B", en: "Stage B" },
+    label: { es: ["STAGE B"], en: ["STAGE B"] },
     kind: "stage",
     level: "planta-alta",
     x: 168,
@@ -130,15 +136,19 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 112,
     r: 18,
     key: true,
-    description:
-      "El segundo escenario (antes «ASYNC Stage»), en terraza, en la PLANTA ALTA del extremo noroeste del jardín. No se ve desde el piso: hay que subir.",
-    howTo:
-      "Cruza el jardín hasta la esquina noroeste, bajo los árboles. Las escaleras están justo al norte de la terraza — marcadas con la flecha roja en el plano oficial.",
+    description: {
+      es: "El segundo escenario (antes «ASYNC Stage»), en terraza, en la PLANTA ALTA del extremo noroeste del jardín. No se ve desde el piso: hay que subir.",
+      en: "The second stage (formerly “ASYNC Stage”), on a terrace UPSTAIRS at the north-west end of the garden. You can't see it from the ground: go up.",
+    },
+    howTo: {
+      es: "Cruza el jardín hasta la esquina noroeste, bajo los árboles. Las escaleras están justo al norte de la terraza — marcadas con la flecha roja en el plano oficial.",
+      en: "Cross the garden to the north-west corner, under the trees. The stairs are just north of the terrace — marked with the red arrow on the official plan.",
+    },
   },
   {
     id: "taller-a",
-    name: "Taller A",
-    label: ["TALLER A"],
+    name: { es: "Taller A", en: "Taller A" },
+    label: { es: ["TALLER A"], en: ["TALLER A"] },
     kind: "workshop",
     level: "planta-baja",
     x: 352,
@@ -147,15 +157,19 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 132,
     r: 10,
     key: true,
-    description:
-      "Sala de talleres (antes «The Sandbox»), techada, dentro de la casa, al sur del Patio casa. Trae tu laptop.",
-    howTo:
-      "Entra por el ingreso de la casa, a la derecha del Patio casa, y cruza el patio hacia el sur: es la primera sala.",
+    description: {
+      es: "Sala de talleres (antes «The Sandbox»), techada, dentro de la casa, al sur del Patio casa. Trae tu laptop.",
+      en: "Workshop room (formerly “The Sandbox”), indoors in the house, south of the house patio. Bring your laptop.",
+    },
+    howTo: {
+      es: "Entra por el ingreso de la casa, a la derecha del Patio casa, y cruza el patio hacia el sur: es la primera sala.",
+      en: "Go in through the house entrance, to the right of the house patio, and cross the patio southwards: it's the first room.",
+    },
   },
   {
     id: "taller-b",
-    name: "Taller B",
-    label: ["TALLER B"],
+    name: { es: "Taller B", en: "Taller B" },
+    label: { es: ["TALLER B"], en: ["TALLER B"] },
     kind: "workshop",
     level: "planta-baja",
     x: 352,
@@ -164,15 +178,19 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 170,
     r: 10,
     key: true,
-    description:
-      "La segunda sala de talleres (antes «The Playground»), también techada, inmediatamente al sur del Taller A.",
-    howTo:
-      "Misma entrada que el Taller A; sigue hacia el sur, es la sala siguiente.",
+    description: {
+      es: "La segunda sala de talleres (antes «The Playground»), también techada, inmediatamente al sur del Taller A.",
+      en: "The second workshop room (formerly “The Playground”), also indoors, right south of Taller A.",
+    },
+    howTo: {
+      es: "Misma entrada que el Taller A; sigue hacia el sur, es la sala siguiente.",
+      en: "Same entrance as Taller A; keep heading south, it's the next room.",
+    },
   },
   {
     id: "registro",
-    name: "Registro & Lobby",
-    label: ["REGISTRO", "& LOBBY"],
+    name: { es: "Registro & Lobby", en: "Registration & Lobby" },
+    label: { es: ["REGISTRO", "& LOBBY"], en: ["REGISTRATION", "& LOBBY"] },
     kind: "service",
     level: "planta-baja",
     x: 855,
@@ -181,14 +199,19 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 128,
     r: 10,
     key: true,
-    description:
-      "Aquí recoges tu gafete. Está en la esquina sureste del jardín sur, a unos pasos del acceso.",
-    howTo: "Primera parada al llegar: entrando por el acceso, a tu derecha.",
+    description: {
+      es: "Aquí recoges tu gafete. Está en la esquina sureste del jardín sur, a unos pasos del acceso.",
+      en: "Pick up your badge here. It's in the south-east corner of the south garden, a few steps from the entrance.",
+    },
+    howTo: {
+      es: "Primera parada al llegar: entrando por el acceso, a tu derecha.",
+      en: "Your first stop: on your right as you come in through the entrance.",
+    },
   },
   {
     id: "cowork",
-    name: "Cowork · NaN Zone",
-    label: ["COWORK", "NaN Zone"],
+    name: { es: "Cowork · NaN Zone", en: "Cowork · NaN Zone" },
+    label: { es: ["COWORK", "NaN Zone"], en: ["COWORK", "NaN Zone"] },
     kind: "service",
     level: "planta-baja",
     x: 655,
@@ -197,14 +220,19 @@ export const VENUE_ZONES: VenueZone[] = [
     h: 122,
     r: 10,
     key: true,
-    description:
-      "Zona de trabajo con mesas y contactos, sobre el flanco oriente de la casa.",
-    howTo: "Subiendo desde el registro hacia el norte, por el lado del jardín oriente.",
+    description: {
+      es: "Zona de trabajo con mesas y contactos, sobre el flanco oriente de la casa.",
+      en: "Work area with tables and power outlets, on the east side of the house.",
+    },
+    howTo: {
+      es: "Subiendo desde el registro hacia el norte, por el lado del jardín oriente.",
+      en: "Head north from registration, along the east side of the garden.",
+    },
   },
   {
     id: "npm-zone",
-    name: "Sponsors · NPM Zone",
-    label: ["SPONSORS", "NPM Zone"],
+    name: { es: "Sponsors · NPM Zone", en: "Sponsors · NPM Zone" },
+    label: { es: ["SPONSORS", "NPM Zone"], en: ["SPONSORS", "NPM Zone"] },
     kind: "sponsor",
     level: "planta-baja",
     x: 240,
@@ -212,13 +240,15 @@ export const VENUE_ZONES: VenueZone[] = [
     w: 224,
     h: 196,
     r: 12,
-    description:
-      "Stands de patrocinadores y actividades, en la mitad poniente del jardín norte. También es la sede del Happy Hour.",
+    description: {
+      es: "Stands de patrocinadores y actividades, en la mitad poniente del jardín norte. También es la sede del Happy Hour.",
+      en: "Sponsor booths and activities, in the west half of the north garden. It's also where the Happy Hour happens.",
+    },
   },
   {
     id: "acceso",
-    name: "Acceso principal",
-    label: ["ACCESO"],
+    name: { es: "Acceso principal", en: "Main entrance" },
+    label: { es: ["ACCESO"], en: ["ENTRANCE"] },
     kind: "entrance",
     level: "planta-baja",
     x: 715,
@@ -226,13 +256,15 @@ export const VENUE_ZONES: VenueZone[] = [
     w: 200,
     h: 66,
     r: 10,
-    description:
-      "Entrada por el jardín sur, sobre Av. Ignacio L. Vallarta 1305, Col. Americana. Es el único acceso peatonal al venue.",
+    description: {
+      es: "Entrada por el jardín sur, sobre Av. Ignacio L. Vallarta 1305, Col. Americana. Es el único acceso peatonal al venue.",
+      en: "Entrance through the south garden, on Av. Ignacio L. Vallarta 1305, Col. Americana. It's the only pedestrian entrance to the venue.",
+    },
   },
   {
     id: "ingreso-casa",
-    name: "Ingreso a la casa",
-    label: ["INGRESO", "CASA"],
+    name: { es: "Ingreso a la casa", en: "House entrance" },
+    label: { es: ["INGRESO", "CASA"], en: ["HOUSE", "ENTRANCE"] },
     kind: "entrance",
     level: "planta-baja",
     x: 526,
@@ -240,13 +272,15 @@ export const VENUE_ZONES: VenueZone[] = [
     w: 118,
     h: 88,
     r: 10,
-    description:
-      "Puerta principal de la casa, pegada al Patio casa por su lado derecho. Por aquí se llega al Taller A y al Taller B.",
+    description: {
+      es: "Puerta principal de la casa, pegada al Patio casa por su lado derecho. Por aquí se llega al Taller A y al Taller B.",
+      en: "The house's main door, on the right side of the house patio. This is the way to Taller A and Taller B.",
+    },
   },
   {
     id: "banos-norte",
-    name: "Baños y regaderas",
-    label: ["WC"],
+    name: { es: "Baños y regaderas", en: "Restrooms & showers" },
+    label: { es: ["WC"], en: ["WC"] },
     kind: "restroom",
     level: "planta-baja",
     x: 700,
@@ -254,12 +288,15 @@ export const VENUE_ZONES: VenueZone[] = [
     w: 76,
     h: 118,
     r: 8,
-    description: "Baños H/M, regaderas y lockers, sobre el costado oriente.",
+    description: {
+      es: "Baños H/M, regaderas y lockers, sobre el costado oriente.",
+      en: "Restrooms, showers and lockers, on the east side.",
+    },
   },
   {
     id: "banos-casa",
-    name: "Baños (casa)",
-    label: ["WC"],
+    name: { es: "Baños (casa)", en: "Restrooms (house)" },
+    label: { es: ["WC"], en: ["WC"] },
     kind: "restroom",
     level: "planta-baja",
     x: 252,
@@ -267,7 +304,10 @@ export const VENUE_ZONES: VenueZone[] = [
     w: 66,
     h: 78,
     r: 8,
-    description: "Baños dentro de la casa, frente al Taller A y al Taller B.",
+    description: {
+      es: "Baños dentro de la casa, frente al Taller A y al Taller B.",
+      en: "Restrooms inside the house, across from Taller A and Taller B.",
+    },
   },
 ];
 

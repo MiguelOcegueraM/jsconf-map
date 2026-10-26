@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Headphones, Map, Star } from "lucide-react";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/", label: "Mapa", Icon: Map },
-  { href: "/agenda", label: "Agenda", Icon: CalendarDays },
-  { href: "/favoritos", label: "Favoritos", Icon: Star },
-  { href: "/traduccion", label: "Traducción", Icon: Headphones },
+  { href: "/", key: "map", Icon: Map },
+  { href: "/agenda", key: "agenda", Icon: CalendarDays },
+  { href: "/favoritos", key: "favorites", Icon: Star },
+  { href: "/traduccion", key: "translation", Icon: Headphones },
 ] as const;
 
 function isActive(href: string, pathname: string) {
@@ -25,10 +26,11 @@ function isActive(href: string, pathname: string) {
 export function NavPill() {
   const pathname = usePathname();
   const { ids } = useFavorites();
+  const { t } = useI18n();
 
   return (
-    <nav aria-label="Secciones" className="grid grid-cols-4 gap-2">
-      {TABS.map(({ href, label, Icon }) => {
+    <nav aria-label={t.shell.sections} className="grid grid-cols-4 gap-2">
+      {TABS.map(({ href, key, Icon }) => {
         const active = isActive(href, pathname);
         const count = href === "/favoritos" ? ids.length : 0;
 
@@ -47,7 +49,7 @@ export function NavPill() {
             )}
           >
             <Icon className="size-5 shrink-0" aria-hidden />
-            {label}
+            {t.nav[key]}
             {count > 0 && (
               <span
                 className={cn(

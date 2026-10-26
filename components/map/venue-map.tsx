@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PageHero } from "@/components/shell/page-hero";
+import { useI18n } from "@/lib/i18n/client";
 import { InstallGuide } from "./install-guide";
 import { VenueSvg } from "./venue-svg";
 import { ZoneSheet } from "./zone-sheet";
@@ -33,6 +34,7 @@ import { cn } from "@/lib/utils";
 const KEY_ZONES = VENUE_ZONES.filter((z) => z.key);
 
 export function VenueMap() {
+  const { t, locale } = useI18n();
   const [selected, setSelected] = useState<VenueZone | null>(null);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -81,9 +83,8 @@ export function VenueMap() {
 
   return (
     <div className="flex flex-col">
-      <PageHero title="El venue">
-        <strong className="font-bold">Jardín Americana</strong> · Av. Ignacio L. Vallarta
-        1305, Col. Americana. Toca cualquier zona para ver cómo llegar.
+      <PageHero title={t.map.title}>
+        <strong className="font-bold">{t.map.venue}</strong> · {t.map.intro}
       </PageHero>
 
       {/* Accesos rápidos a los seis puntos que sí o sí vas a buscar */}
@@ -100,7 +101,7 @@ export function VenueMap() {
               ZONE_STYLES[z.kind].chip,
             )}
           >
-            {z.name}
+            {z.name[locale]}
           </button>
         ))}
       </div>
@@ -158,6 +159,7 @@ function MapControls({
 }: {
   apiRef: React.RefObject<ReactZoomPanPinchRef | null>;
 }) {
+  const { t } = useI18n();
   const btn =
     "size-10 rounded-full border-2 border-js-indigo-900 bg-white text-js-indigo-900 shadow-[2px_2px_0_0_#101452] hover:bg-js-haze";
 
@@ -166,21 +168,18 @@ function MapControls({
       <Dialog>
         <DialogTrigger
           render={<Button size="icon" variant="ghost" className={btn} />}
-          aria-label="Ver plano original"
+          aria-label={t.map.originalPlan}
         >
           <Layers className="size-4" />
         </DialogTrigger>
         <DialogContent className="max-h-[92dvh] gap-3 overflow-auto p-4 sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle className="font-heading">Plano arquitectónico original</DialogTitle>
-            <DialogDescription>
-              Planta del venue a escala 1:100, tal cual la entregó producción. La
-              flecha roja marca las escaleras al escenario en terraza.
-            </DialogDescription>
+            <DialogTitle className="font-heading">{t.map.originalPlanTitle}</DialogTitle>
+            <DialogDescription>{t.map.originalPlanBody}</DialogDescription>
           </DialogHeader>
           <Image
             src="/plano-original.png"
-            alt="Planta arquitectónica de Jardín Americana con la distribución de escenarios"
+            alt={t.map.originalPlanAlt}
             width={1400}
             height={1812}
             className="h-auto w-full rounded-lg border border-neutral-200"
@@ -192,7 +191,7 @@ function MapControls({
         size="icon"
         variant="ghost"
         className={btn}
-        aria-label="Acercar"
+        aria-label={t.map.zoomIn}
         onClick={() => apiRef.current?.zoomIn(0.5)}
       >
         <Plus className="size-4" />
@@ -201,7 +200,7 @@ function MapControls({
         size="icon"
         variant="ghost"
         className={btn}
-        aria-label="Alejar"
+        aria-label={t.map.zoomOut}
         onClick={() => apiRef.current?.zoomOut(0.5)}
       >
         <Minus className="size-4" />
@@ -210,7 +209,7 @@ function MapControls({
         size="icon"
         variant="ghost"
         className={btn}
-        aria-label="Ver todo el venue"
+        aria-label={t.map.reset}
         onClick={() => apiRef.current?.resetTransform(300)}
       >
         <Maximize2 className="size-4" />
@@ -219,25 +218,20 @@ function MapControls({
   );
 }
 
-const LEGEND = [
-  { kind: "stage", label: "Escenarios" },
-  { kind: "workshop", label: "Talleres" },
-  { kind: "service", label: "Servicios" },
-  { kind: "sponsor", label: "Sponsors" },
-  { kind: "entrance", label: "Accesos" },
-] as const;
+const LEGEND = ["stage", "workshop", "service", "sponsor", "entrance"] as const;
 
 function MapLegend() {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-      {LEGEND.map(({ kind, label }) => (
+      {LEGEND.map((kind) => (
         <span key={kind} className="flex items-center gap-1.5 text-xs font-medium text-js-indigo-900">
           <span
             className="size-3.5 rounded border-2 border-js-indigo-900"
             style={{ backgroundColor: ZONE_STYLES[kind].fill }}
             aria-hidden
           />
-          {label}
+          {t.map.legend[kind]}
         </span>
       ))}
     </div>

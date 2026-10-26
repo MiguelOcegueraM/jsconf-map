@@ -20,7 +20,7 @@ function formatStamp(iso: string) {
  * detrás del login y, con SYNC_SUBDOMAIN, también en `sync.<dominio>`.
  */
 export default async function SyncPage() {
-  const { sessions, generatedAt, unavailable } = await getAgenda();
+  const { sessions, generatedAt, unavailable } = await getAgenda("es");
   const talks = sessions.filter((s) => s.speakers.length > 0).length;
 
   return (
