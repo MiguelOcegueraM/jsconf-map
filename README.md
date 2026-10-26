@@ -51,6 +51,7 @@ That's it — <http://localhost:3000>
 | `/` | Interactive venue map. `/?zona=stage-b` opens a zone directly |
 | `/agenda` | The programme. **Swipe a talk right to save it, left to remove it** |
 | `/favoritos` | Your curated agenda, calendar export and reminders |
+| `/traduccion` | Live translation: pick a room, follow captions or listen. `?sala=stage_a` opens a room directly (for QR codes) |
 | `/admin/sync` | The "secret button" that refreshes the schedule — password **`jsconf2026`** |
 
 Favourites live in your browser's `localStorage`, so attendees never create an
@@ -116,6 +117,33 @@ jsconf-agenda's `sala` values are used as-is, with the names jsconf.mx uses:
 | `stage_b` | **Stage B** | ASYNC Stage (upstairs terrace) | `stage-b` |
 | `taller_a` | **Taller A** | The Sandbox | `taller-a` |
 | `taller_b` | **Taller B** | The Playground | `taller-b` |
+
+---
+
+## Live translation
+
+Each room has a "runner" on Google Cloud Run that takes the stage audio, runs
+it through Gemini Live and broadcasts it. The browser connects **directly** to
+the runner's WebSocket (`wss://run-<room>-….a.run.app/listen`) — never through
+Vercel, whose functions can't hold long-lived sockets. Listening is public and
+read-only, so there are no secrets; the URLs live in `lib/translation.ts`.
+
+- The contract is the runners' *listener guide*: a `status` message (mode
+  `idle` / `test` / `live`, current session, target language), `caption`
+  messages (`kind` original/translation, replaced by `id` until `finished`),
+  and binary audio — 16-bit LE mono PCM, first byte = stream (0 original,
+  1 translation).
+- A room opens in **captions only**, so nobody's phone blasts audio in the
+  middle of a talk. Picking *Traducido* or *Original* is the tap the browser
+  needs to start the `AudioContext` (`lib/pcm-player.ts`).
+- The socket reconnects on its own with backoff (Cloud Run closes sockets
+  after about an hour), resubscribes and drops stale audio.
+- Only the last six lines of each caption track are kept.
+- iPhone: `navigator.audioSession.type = "playback"` lets audio play with the
+  silent switch on, and a wake lock keeps the screen on — but if the user
+  locks the screen, iOS suspends web audio. The room page says so.
+- Taller A and Taller B show as *Próximamente* until their runners go live:
+  flip `available` in `lib/translation.ts`.
 
 ---
 
@@ -200,6 +228,7 @@ app/
   agenda/                  Programme
   favoritos/               Curated agenda, calendar, reminders
   admin/sync/              Secret sync button
+  traduccion/              Live translation: room picker and listener
   api/sesiones/            Session times for device-side reminders
   manifest.ts              PWA manifest
 components/
@@ -207,12 +236,17 @@ components/
   agenda/                  Swipeable cards, filters, day tabs, favourites
   shell/                   jsconf.mx-style header, navigation, page hero
   admin/                   Sync button
+  translation/             Room picker, listener, caption tracks
 hooks/
   use-event-now.ts         Event clock (Guadalajara), `?ahora=` override
   use-reminders.ts         Notification permission + scheduler
+  use-room-listener.ts     Runner WebSocket: status, captions, reconnection
+  use-wake-lock.ts         Keeps the screen on while listening
 lib/
   agenda-api.ts            jsconf-agenda client (cached, tag "agenda")
   program.ts               Rooms + general activities
+  translation.ts           Runner URLs and message types
+  pcm-player.ts            Web Audio player for the runners' PCM
   venue.ts                 Venue geometry extracted from the PDF
   actions.ts               Login and sync Server Actions
 proxy.ts                   Guards /admin, routes the sync subdomain

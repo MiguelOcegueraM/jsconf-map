@@ -126,7 +126,7 @@ export function FavoritesView({ agenda }: { agenda: Agenda }) {
 
             {byDay.map(({ day, slots }) => (
               <section key={day} className="flex flex-col gap-4">
-                <h2 className="font-display sticky top-[124px] z-10 -mx-4 border-y-2 border-js-indigo-900 bg-js-lavender px-4 py-1.5 text-sm text-js-indigo-900 uppercase">
+                <h2 className="font-display sticky top-[135px] z-10 -mx-4 border-y-2 border-js-indigo-900 bg-js-lavender px-4 py-1.5 text-sm text-js-indigo-900 uppercase">
                   {DAY_LABELS[day].n}
                   <span className="ml-2 font-sans text-xs font-medium normal-case">
                     {DAY_LABELS[day].long}

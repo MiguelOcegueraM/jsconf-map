@@ -11,12 +11,12 @@
  * sin señal — cosa nada rara en un venue con 500 personas colgadas del mismo LTE.
  */
 
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `jsconf-shell-${VERSION}`;
 const ASSETS = `jsconf-assets-${VERSION}`;
 
 /** Rutas que vale la pena tener listas desde la primera visita. */
-const CORE_ROUTES = ["/", "/agenda", "/favoritos"];
+const CORE_ROUTES = ["/", "/agenda", "/favoritos", "/traduccion"];
 const CORE_ASSETS = [
   "/plano-original.png",
   "/brand/jsconf-light.svg",

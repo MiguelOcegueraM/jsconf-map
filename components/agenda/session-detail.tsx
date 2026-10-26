@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarPlus, MapPin } from "lucide-react";
+import { CalendarPlus, Headphones, MapPin } from "lucide-react";
 import type { Session, Stage } from "@/lib/types";
 import { DAY_LABELS } from "@/lib/program";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/lib/agenda";
 import { downloadIcs, googleCalendarUrl } from "@/lib/ics";
 import { isDay } from "@/lib/agenda";
+import { translationRoom } from "@/lib/translation";
 
 const LANGUAGE_NAMES = { es: "Español", en: "Inglés" } as const;
 
@@ -80,6 +81,15 @@ export function SessionDetail({ session, stage }: { session: Session; stage?: St
       </p>
 
       <div className="flex flex-wrap gap-2.5">
+        {translationRoom(session.stageId)?.available && (
+          <Link
+            href={`/traduccion?sala=${session.stageId}`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-js-indigo-900 bg-js-yellow-500 px-4 text-sm font-bold text-js-indigo-900"
+          >
+            <Headphones className="size-4" aria-hidden />
+            Traducción en vivo
+          </Link>
+        )}
         <button
           type="button"
           onClick={() => downloadIcs([session], stages, `jsconf-${session.id}.ics`)}
