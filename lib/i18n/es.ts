@@ -255,6 +255,8 @@ const es = {
     hide: "Ocultar",
     show: "Mostrar",
     waiting: "Los subtítulos aparecen aquí en cuanto alguien habla.",
+    textSize: "Tamaño de letra",
+    textSizes: ["Chica", "Mediana", "Grande", "Muy grande"],
   },
 };
 

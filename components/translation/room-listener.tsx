@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Captions, Headphones, Smartphone, Volume2 } from "lucide-react";
 import type { Stage } from "@/lib/types";
@@ -14,6 +14,7 @@ import {
 import { PcmPlayer, STREAM_BYTE } from "@/lib/pcm-player";
 import { useRoomListener, type Connection } from "@/hooks/use-room-listener";
 import { useWakeLock } from "@/hooks/use-wake-lock";
+import { CAPTION_SIZES_PX, useCaptionSize } from "@/hooks/use-caption-size";
 import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
     original: true,
   });
   const [audioError, setAudioError] = useState(false);
+  const [sizeStep, setSizeStep] = useCaptionSize();
   const { t } = useI18n();
   const playerRef = useRef<PcmPlayer | null>(null);
 
@@ -76,6 +78,15 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
     }
     setAudio(next);
   }
+
+  const toggleTranslation = useCallback(
+    () => setVisible((v) => ({ ...v, translation: !v.translation })),
+    [],
+  );
+  const toggleOriginal = useCallback(
+    () => setVisible((v) => ({ ...v, original: !v.original })),
+    [],
+  );
 
   const source = status?.session?.language ?? "es";
   const target = status?.translationLanguage ?? (source === "es" ? "en" : "es");
@@ -153,18 +164,22 @@ export function RoomListener({ room, stage }: { room: TranslationRoom; stage: St
           )}
         </fieldset>
 
+        <TextSizeControl step={sizeStep} onChange={setSizeStep} />
+
         <CaptionTrack
           title={t.translation.trackTranslation(LANGUAGE_SHORT[target] ?? target.toUpperCase())}
           lines={captions.translation}
           shown={visible.translation}
-          onToggle={() => setVisible((v) => ({ ...v, translation: !v.translation }))}
+          onToggle={toggleTranslation}
+          fontSize={CAPTION_SIZES_PX[sizeStep]}
           emphasis
         />
         <CaptionTrack
           title={t.translation.trackOriginal(LANGUAGE_SHORT[source] ?? source.toUpperCase())}
           lines={captions.original}
           shown={visible.original}
-          onToggle={() => setVisible((v) => ({ ...v, original: !v.original }))}
+          onToggle={toggleOriginal}
+          fontSize={CAPTION_SIZES_PX[sizeStep]}
         />
       </div>
     </div>
@@ -263,27 +278,81 @@ function AudioOption({
   );
 }
 
-function CaptionTrack({
+/**
+ * Un paso por botón, con la "A" al tamaño que da: se elige viendo, sin leer.
+ * Botones de 48px de alto para dedos y vista cansados.
+ */
+function TextSizeControl({ step, onChange }: { step: number; onChange: (step: number) => void }) {
+  const { t } = useI18n();
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-[11px] font-bold tracking-[0.12em] text-js-slate uppercase">
+        {t.translation.textSize}
+      </legend>
+      <div className="grid grid-cols-4 gap-2">
+        {CAPTION_SIZES_PX.map((px, i) => (
+          <button
+            key={px}
+            type="button"
+            aria-pressed={step === i}
+            aria-label={t.translation.textSizes[i]}
+            title={t.translation.textSizes[i]}
+            onClick={() => onChange(i)}
+            className={cn(
+              "radius-card flex min-h-12 items-center justify-center border-[3px] border-js-indigo-900 leading-none font-bold",
+              "transition-transform active:translate-y-px",
+              "focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-js-yellow-500",
+              step === i
+                ? "bg-js-indigo-500 text-white shadow-[3px_3px_0_0_#f3ba20]"
+                : "bg-white text-js-indigo-900",
+            )}
+          >
+            <span aria-hidden style={{ fontSize: 14 + i * 5 }}>
+              A
+            </span>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/**
+ * memo: el estado de la sala cambia por muchas razones; una pista sólo se
+ * repinta cuando cambian sus líneas o su tamaño.
+ */
+const CaptionTrack = memo(function CaptionTrack({
   title,
   lines,
   shown,
   onToggle,
+  fontSize,
   emphasis = false,
 }: {
   title: string;
   lines: CaptionLine[];
   shown: boolean;
   onToggle: () => void;
+  fontSize: number;
   emphasis?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
 
-  // Siempre pegado a la última línea conforme entra texto.
+  // Siempre pegado a la última línea conforme entra texto (o cambia el tamaño).
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [lines]);
+  }, [lines, fontSize]);
+
+  // Al lector de pantalla sólo se le anuncian líneas terminadas: anunciar
+  // cada fragmento parcial lo satura, y en Android con cualquier servicio de
+  // accesibilidad activo (gestores de contraseñas incluidos) cada cambio en
+  // una región "live" cuesta trabajo extra en el hilo principal.
+  let lastFinished: CaptionLine | undefined;
+  for (let i = lines.length - 1; i >= 0 && !lastFinished; i--) {
+    if (lines[i].finished) lastFinished = lines[i];
+  }
 
   return (
     <section className="radius-card border-[3px] border-js-indigo-900 bg-white">
@@ -298,14 +367,16 @@ function CaptionTrack({
           {shown ? t.translation.hide : t.translation.show}
         </button>
       </div>
+      {shown && emphasis && (
+        <p className="sr-only" aria-live="polite">
+          {lastFinished?.text}
+        </p>
+      )}
       {shown && (
         <div
           ref={scrollRef}
-          aria-live="polite"
-          className={cn(
-            "flex max-h-56 flex-col gap-1.5 overflow-y-auto px-4 pb-4",
-            emphasis ? "text-[19px] leading-snug" : "text-[15px] leading-snug",
-          )}
+          className="flex max-h-[min(11em,50svh)] flex-col gap-2 overflow-y-auto px-4 pb-4 leading-snug"
+          style={{ fontSize }}
         >
           {lines.length === 0 ? (
             <p className="text-sm text-js-slate">{t.translation.waiting}</p>
@@ -314,8 +385,9 @@ function CaptionTrack({
               <p
                 key={line.id}
                 className={cn(
-                  "transition-colors",
-                  line.finished ? "font-medium text-js-indigo-900" : "text-js-slate italic",
+                  line.finished
+                    ? cn("text-js-indigo-900", emphasis ? "font-semibold" : "font-medium")
+                    : "text-js-slate",
                 )}
               >
                 {line.text}
@@ -326,4 +398,4 @@ function CaptionTrack({
       )}
     </section>
   );
-}
+});

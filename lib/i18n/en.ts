@@ -247,6 +247,8 @@ const en: Dictionary = {
     hide: "Hide",
     show: "Show",
     waiting: "Captions show up here as soon as someone speaks.",
+    textSize: "Text size",
+    textSizes: ["Small", "Medium", "Large", "Extra large"],
   },
 };
 

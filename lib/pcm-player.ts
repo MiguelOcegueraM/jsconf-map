@@ -3,14 +3,12 @@
  * mono, sin contenedor. El byte 0 de cada paquete dice de qué stream es
  * (0 original, 1 traducido) y se descarta antes de decodificar.
  *
- * Cada paquete se agenda justo detrás del anterior en el AudioContext, con
- * un colchón corto para absorber el jitter de la red. Si la cola crece
- * (pestaña congelada, red a tirones) se tira lo atrasado: en traducción en
- * vivo es mejor perder medio segundo que ir tres atrás del ponente.
+ * El trabajo pesado (convertir, remuestrear, colchón contra el jitter) vive
+ * en un AudioWorklet (`public/pcm-worklet.js`), fuera del hilo principal:
+ * aquí sólo se filtra el stream y se le pasa el paquete sin copiarlo dos veces.
  */
 
-const LEAD_S = 0.2;
-const MAX_LAG_S = 1.2;
+const WORKLET_URL = "/pcm-worklet.js";
 
 export const STREAM_BYTE = { original: 0, translation: 1 } as const;
 
@@ -18,8 +16,7 @@ type AudioSessionNavigator = Navigator & { audioSession?: { type: string } };
 
 export class PcmPlayer {
   private ctx: AudioContext | null = null;
-  private nextTime = 0;
-  private sources = new Set<AudioBufferSourceNode>();
+  private node: AudioWorkletNode | null = null;
 
   constructor(private sampleRate = 16000) {}
 
@@ -30,51 +27,42 @@ export class PcmPlayer {
     if (nav.audioSession) nav.audioSession.type = "playback";
 
     this.ctx ??= new AudioContext();
-    if (this.ctx.state !== "running") await this.ctx.resume();
+    // resume() antes de cualquier await: Safari sólo lo acepta dentro del gesto.
+    const resumed = this.ctx.state === "running" ? Promise.resolve() : this.ctx.resume();
+
+    if (!this.node) {
+      await this.ctx.audioWorklet.addModule(WORKLET_URL);
+      this.node = new AudioWorkletNode(this.ctx, "pcm-player", {
+        numberOfInputs: 0,
+        outputChannelCount: [1],
+      });
+      this.node.connect(this.ctx.destination);
+      this.node.port.postMessage({ type: "rate", rate: this.sampleRate });
+    }
+    await resumed;
   }
 
   setSampleRate(rate: number) {
-    if (rate > 0) this.sampleRate = rate;
+    if (rate <= 0) return;
+    this.sampleRate = rate;
+    this.node?.port.postMessage({ type: "rate", rate });
   }
 
-  /** Agenda un paquete. `stream` filtra lo que no es del stream elegido. */
+  /** Encola un paquete. `stream` filtra lo que no es del stream elegido. */
   push(packet: ArrayBuffer, stream: number) {
-    const ctx = this.ctx;
-    if (!ctx || ctx.state !== "running" || packet.byteLength < 3) return;
+    if (!this.node || this.ctx?.state !== "running" || packet.byteLength < 3) return;
+    if (new Uint8Array(packet, 0, 1)[0] !== stream) return;
 
-    const view = new DataView(packet);
-    if (view.getUint8(0) !== stream) return;
-
+    // El slice realinea a 2 bytes (Int16Array no acepta offset 1). Todas las
+    // plataformas que importan son little-endian, igual que el runner.
     const count = Math.floor((packet.byteLength - 1) / 2);
-    const buffer = ctx.createBuffer(1, count, this.sampleRate);
-    const samples = buffer.getChannelData(0);
-    for (let i = 0; i < count; i++) {
-      samples[i] = view.getInt16(1 + i * 2, true) / 32768;
-    }
-
-    const now = ctx.currentTime;
-    if (this.nextTime - now > MAX_LAG_S) this.flush();
-    // Primer paquete, o la cola se vació: arranca con el colchón.
-    if (this.nextTime < now) this.nextTime = now + LEAD_S;
-
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.onended = () => this.sources.delete(source);
-    source.start(this.nextTime);
-    this.sources.add(source);
-    this.nextTime += buffer.duration;
+    const samples = new Int16Array(packet.slice(1, 1 + count * 2));
+    this.node.port.postMessage({ type: "push", samples }, [samples.buffer]);
   }
 
-  /** Corta lo que esté agendado (al cambiar de stream o reconectar). */
+  /** Corta lo que esté en cola (al cambiar de stream o reconectar). */
   flush() {
-    for (const source of this.sources) {
-      try {
-        source.stop();
-      } catch {}
-    }
-    this.sources.clear();
-    this.nextTime = 0;
+    this.node?.port.postMessage({ type: "flush" });
   }
 
   async stop() {
@@ -84,6 +72,8 @@ export class PcmPlayer {
 
   async close() {
     this.flush();
+    this.node?.disconnect();
+    this.node = null;
     await this.ctx?.close().catch(() => {});
     this.ctx = null;
   }

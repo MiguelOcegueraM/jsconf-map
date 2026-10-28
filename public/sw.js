@@ -11,9 +11,16 @@
  * sin señal — cosa nada rara en un venue con 500 personas colgadas del mismo LTE.
  */
 
-const VERSION = "v5";
+const VERSION = "v6";
 const SHELL = `jsconf-shell-${VERSION}`;
 const ASSETS = `jsconf-assets-${VERSION}`;
+
+/**
+ * Cuánto se espera a la red antes de servir la copia guardada. Con el LTE
+ * del venue saturado un fetch casi nunca falla: se queda colgado decenas de
+ * segundos, y sin este límite la app se ve congelada al cambiar de pantalla.
+ */
+const NETWORK_TIMEOUT_MS = 3500;
 
 /** Rutas que vale la pena tener listas desde la primera visita. */
 const CORE_ROUTES = ["/", "/agenda", "/favoritos", "/traduccion"];
@@ -97,7 +104,7 @@ self.addEventListener("fetch", (event) => {
 
   // Horarios para los recordatorios: red primero, la última copia sin señal.
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(request, ASSETS));
+    event.respondWith(networkFirst(event, ASSETS));
     return;
   }
 
@@ -108,42 +115,78 @@ self.addEventListener("fetch", (event) => {
 
   // Los bundles de Next llevan hash en el nombre: son inmutables.
   if (url.pathname.startsWith("/_next/static/")) {
-    event.respondWith(cacheFirst(request, ASSETS));
+    event.respondWith(cacheFirst(event, ASSETS));
     return;
   }
 
   if (/\.(png|jpg|jpeg|webp|svg|ico|woff2?)$/.test(url.pathname)) {
-    event.respondWith(cacheFirst(request, ASSETS));
+    event.respondWith(cacheFirst(event, ASSETS));
     return;
   }
 
-  event.respondWith(staleWhileRevalidate(request, ASSETS));
+  event.respondWith(staleWhileRevalidate(event, ASSETS));
 });
 
 /**
  * Navegaciones: red primero para que la agenda se vea al día, con la copia
- * cacheada como red de seguridad y el mapa como último recurso.
+ * cacheada como red de seguridad y el mapa como último recurso. Si la red
+ * tarda más de NETWORK_TIMEOUT_MS y hay copia, se sirve la copia; sin copia
+ * se sigue esperando a la red.
  */
-async function handleNavigation(event) {
-  const cache = await caches.open(SHELL);
-  try {
-    const preloaded = await event.preloadResponse;
-    const response = preloaded || (await fetch(event.request));
-    if (response && response.ok) {
-      const copy = await toCacheable(response.clone());
-      await cache.put(stripQuery(event.request.url), copy);
+function handleNavigation(event) {
+  const key = stripQuery(event.request.url);
+  const network = Promise.resolve(event.preloadResponse).then(
+    (preloaded) => preloaded || fetch(event.request),
+  );
+  saveWhenReady(event, SHELL, key, network);
+
+  return (async () => {
+    const fast = await withTimeout(network).catch(() => undefined);
+    if (fast) return fast;
+    const shell = await caches.open(SHELL);
+    const cached = await shell.match(key);
+    if (cached) return cached;
+    if (fast === null) {
+      try {
+        return await network;
+      } catch {}
     }
-    return response;
-  } catch {
     return (
-      (await cache.match(stripQuery(event.request.url))) ??
-      (await cache.match("/")) ??
+      (await shell.match("/")) ??
       new Response("Sin conexión", {
         status: 503,
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       })
     );
-  }
+  })();
+}
+
+/** La respuesta, o `null` si no llegó a tiempo. Rechaza si la red falla. */
+function withTimeout(promise) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), NETWORK_TIMEOUT_MS)),
+  ]);
+}
+
+/**
+ * Guarda en caché lo que traiga `responsePromise` sin retrasar la respuesta a
+ * la página: antes se esperaba a descargar el cuerpo entero y guardarlo, y
+ * con red lenta eso era tiempo con la pantalla en blanco. Se registra con
+ * `waitUntil` de inmediato para que el worker no muera a medio guardar.
+ */
+function saveWhenReady(event, cacheName, key, responsePromise) {
+  event.waitUntil(
+    responsePromise
+      .then(async (response) => {
+        if (!response || !response.ok) return;
+        // clone() aquí, antes de que la página empiece a leer el cuerpo.
+        const copy = response.clone();
+        const cache = await caches.open(cacheName);
+        await cache.put(key, await toCacheable(copy));
+      })
+      .catch(() => {}),
+  );
 }
 
 /** Las rutas se cachean por pathname: `?dia=` y `?escenario=` son estado de UI. */
@@ -152,26 +195,23 @@ function stripQuery(url) {
   return origin + pathname;
 }
 
-async function cacheFirst(request, cacheName) {
-  const cached = await caches.match(request);
+async function cacheFirst(event, cacheName) {
+  const cached = await caches.match(event.request);
   if (cached) return cached;
-  const response = await fetch(request);
-  if (response.ok) {
-    const cache = await caches.open(cacheName);
-    await cache.put(request, await toCacheable(response.clone()));
-  }
-  return response;
+  const network = fetch(event.request);
+  saveWhenReady(event, cacheName, event.request, network);
+  return network;
 }
 
-async function networkFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  try {
-    const response = await fetch(request);
-    if (response.ok) await cache.put(request, await toCacheable(response.clone()));
-    return response;
-  } catch {
-    return (await cache.match(request)) ?? Response.error();
-  }
+async function networkFirst(event, cacheName) {
+  const network = fetch(event.request);
+  saveWhenReady(event, cacheName, event.request, network);
+  const fast = await withTimeout(network).catch(() => undefined);
+  if (fast) return fast;
+  const cached = await caches.match(event.request, { cacheName });
+  if (cached) return cached;
+  if (fast === null) return network.catch(() => Response.error());
+  return Response.error();
 }
 
 /**
@@ -194,14 +234,9 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  const network = fetch(request)
-    .then(async (response) => {
-      if (response.ok) await cache.put(request, await toCacheable(response.clone()));
-      return response;
-    })
-    .catch(() => cached);
+async function staleWhileRevalidate(event, cacheName) {
+  const network = fetch(event.request);
+  saveWhenReady(event, cacheName, event.request, network);
+  const cached = await caches.match(event.request, { cacheName });
   return cached ?? network;
 }
