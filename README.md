@@ -142,8 +142,9 @@ read-only, so there are no secrets; the URLs live in `lib/translation.ts`.
 - iPhone: `navigator.audioSession.type = "playback"` lets audio play with the
   silent switch on, and a wake lock keeps the screen on — but if the user
   locks the screen, iOS suspends web audio. The room page says so.
-- Taller A and Taller B show as *Próximamente* until their runners go live:
-  flip `available` in `lib/translation.ts`.
+- All four rooms have live translation. A room whose runner isn't live yet
+  can be shown as *Próximamente* by setting `available: false` in
+  `lib/translation.ts`.
 
 ---
 

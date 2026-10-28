@@ -20,8 +20,8 @@ const runner = (slug: string) => `wss://run-${slug}-tjrx7rkrbq-pv.a.run.app/list
 export const TRANSLATION_ROOMS: TranslationRoom[] = [
   { stageId: "stage_a", listenerUrl: runner("stage-a"), available: true },
   { stageId: "stage_b", listenerUrl: runner("stage-b"), available: true },
-  { stageId: "taller_a", listenerUrl: runner("taller-a"), available: false },
-  { stageId: "taller_b", listenerUrl: runner("taller-b"), available: false },
+  { stageId: "taller_a", listenerUrl: runner("taller-a"), available: true },
+  { stageId: "taller_b", listenerUrl: runner("taller-b"), available: true },
 ];
 
 export function translationRoom(stageId: string | null | undefined) {
